@@ -22,12 +22,12 @@
     <ProjectGuid>{1590D7CD-7D3A-4AB7-A355-EE02F7FB987D}</ProjectGuid>
     <RootNamespace>NppPluginTemplate</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v140_xp</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
@@ -229,6 +229,7 @@
   <ItemGroup>
     <ClCompile Include="common\AcceleratorHook.cpp" />
     <ClCompile Include="common\ActiveScriptSiteDebug.cpp" />
+    <ClCompile Include="common\CallFrame.cpp" />
     <ClCompile Include="common\Dialog\Dialog.cpp" />
     <ClCompile Include="common\Dialog\MDocHostUIHandler.cpp" />
     <ClCompile Include="common\Dialog\MOleClientSite.cpp" />
@@ -264,6 +265,7 @@
     <ClInclude Include="common\AcceleratorHook.h" />
     <ClInclude Include="common\AcceleratorTable.h" />
     <ClInclude Include="common\ActiveScriptSiteDebug.h" />
+    <ClInclude Include="common\CallFrame.h" />
     <ClInclude Include="common\ComBase.h" />
     <ClInclude Include="common\Dialog\Dialog.h" />
     <ClInclude Include="common\Dialog\MDocHostUIHandler.h" />
@@ -296,6 +298,7 @@
     <ClInclude Include="npp\PluginDefinition.h" />
     <ClInclude Include="npp\PluginInterface.h" />
     <ClInclude Include="npp\Scintilla.h" />
+    <ClInclude Include="Sci_Position.h" />
     <CustomBuild Include="VersionInfo.h">
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">VersionInfo_tmpl.h;%(AdditionalInputs)</AdditionalInputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VersionInfo_tmpl.h;%(AdditionalInputs)</AdditionalInputs>
@@ -319,9 +322,11 @@
     <Midl Include="common\common.idl">
       <ExcludedFromBuild>true</ExcludedFromBuild>
       <GenerateTypeLibrary>false</GenerateTypeLibrary>
-      <TypeLibraryName></TypeLibraryName>
+      <TypeLibraryName>
+      </TypeLibraryName>
       <OutputDirectory>$(ProjectDir)com</OutputDirectory>
-      <DllDataFileName></DllDataFileName>
+      <DllDataFileName>
+      </DllDataFileName>
     </Midl>
     <Midl Include="editor\editor.idl">
       <TypeLibraryName>$(ProjectDir)/project.tlb</TypeLibraryName>
