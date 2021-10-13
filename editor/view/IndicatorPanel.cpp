@@ -20,6 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "IndicatorPanel.h"
 
 #pragma warning (disable : 4355)
+
+COLORREF color_change = RGB(17, 240, 84);
+COLORREF color_search = RGB(212, 157, 6);
+
 IndicatorPanel::IndicatorPanel(SCIView* view ): m_IndicPixelsUp(this), m_IndicLinesUp(this)
 {
 	m_IndicatorMask = (~0); // All of indicators are enabled
@@ -309,15 +313,34 @@ void IndicatorPanel::paintIndicators(HDC hdc){
 		DWORD mask = pixelIndicators[i];
 		DWORD maskToPaint = m_IndicatorMask & mask;
 		if (maskToPaint){
-			COLORREF color = getColorForMask(maskToPaint);		
-			hpen = CreatePen(PS_SOLID, 1, color);
-			oldPen = (HPEN)SelectObject(hdc, hpen);
+			COLORREF color = getColorForMask(maskToPaint);
+			HBRUSH brush = CreateSolidBrush(color);
 			int curOffset = i + topOffset;
-			res = MoveToEx(hdc, m_PanelRect.left + 2, curOffset, NULL);
-			res = LineTo(hdc, m_PanelRect.right - 2, curOffset);
-			SelectObject(hdc, oldPen);
-			DeleteObject(hpen);
+			//RECT t{ m_PanelRect.left + 2, curOffset, m_PanelRect.left + 7, curOffset + 5 };
+			RECT t{ m_PanelRect.left + 9, curOffset, m_PanelRect.left + 14, curOffset + 5 };
+			FillRect(hdc, &t, brush);
+
+			/*color = getColorForMask(maskToPaint + 1);
+			brush = CreateSolidBrush(color);
+			curOffset = i + topOffset;
+			t = { m_PanelRect.left + 9, curOffset, m_PanelRect.left + 14, curOffset + 5 };
+			FillRect(hdc, &t, brush);*/
 		}
+	}
+
+	long x = 2;
+	long y = 0;
+
+	for (auto it = m_set_modified_linenum.begin(); it != m_set_modified_linenum.end(); it++)
+	{
+		y = *it * (scrollHHeight-2*topOffset) / (long)(m_totallines) + topOffset;
+
+		HBRUSH brush = CreateSolidBrush(color_change);
+
+		brush = CreateSolidBrush(color_change);
+
+		RECT t{ m_PanelRect.left + 2, y, m_PanelRect.left + 7, y + 5 };
+		FillRect(hdc, &t, brush);
 	}
 
 }
@@ -373,4 +396,16 @@ void  IndicatorPanel::SetIndicatorMask(DWORD value){
 	m_IndicatorMask = value;
 
 	paintIndicators();
+}
+
+bool IndicatorPanel::fileModified(size_t linenum)
+{
+	bool bResult = false;
+
+	m_set_modified_linenum.insert(linenum);
+
+	size_t totallines = m_View->sci(SCI_GETLINECOUNT, 0, 0);
+	m_totallines = totallines;
+
+	return bResult;
 }

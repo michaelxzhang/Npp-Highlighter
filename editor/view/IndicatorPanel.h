@@ -22,6 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "common\ForegroundIdleHook.h"
 #include "SCIView.h"
 
+#define INDICATOR_MODIFIED  0
+#define INDICATOR_SEARCH    1
+
 class IndicatorPanel
 {
 	struct LineMask{
@@ -39,9 +42,12 @@ class IndicatorPanel
 
 	SCIView* m_View;
 
-	const static int m_PanelWidth = 8;
+	const static int m_PanelWidth = 14;
 
 	void ClearIndicators(int begin, int end);
+
+	size_t         m_totallines = 0;
+	std::set<size_t> m_set_modified_linenum;
 
 public:
 	DWORD* pixelIndicators;
@@ -57,6 +63,8 @@ public:
 	
 	COLORREF getColorForMask(DWORD mask);
 
+	bool fileModified(size_t linenum);
+	
 	static bool hasStyle(HWND hwnd, int style);
 
 	LRESULT OnNCCalcSize(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);

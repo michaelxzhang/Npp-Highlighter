@@ -223,9 +223,6 @@
     <ClInclude Include="common\Dialog\WindowClass.h">
       <Filter>Common\Dialog</Filter>
     </ClInclude>
-    <ClInclude Include="Sci_Position.h">
-      <Filter>Npp</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="editor\editor.idl">
