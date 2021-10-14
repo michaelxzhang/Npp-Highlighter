@@ -46,8 +46,11 @@ class IndicatorPanel
 
 	void ClearIndicators(int begin, int end);
 
+	bool           m_linemodified = false;
 	size_t         m_totallines = 0;
-	std::set<size_t> m_set_modified_linenum;
+	//std::set<size_t> m_set_modified_linenum;
+	ULONG_PTR      m_current_bufferid;
+	std::map<ULONG_PTR, std::set<size_t>> m_map_modified_linenum;
 
 public:
 	DWORD* pixelIndicators;
@@ -118,7 +121,9 @@ public:
 
 			m_IndPanel->GetIndicatorPixels();
 			if (m_IndPanel->m_PixelIndicatorsLen > 0)
+			{
 				m_IndPanel->RedrawIndicatorPanel(); //m_View->paintIndicators();
+			}
 		};
 	};
 

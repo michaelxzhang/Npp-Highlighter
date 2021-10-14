@@ -16,20 +16,39 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "npp\Scintilla.h"
-
+#include "npp\PluginDefinition.h"
 #include "IndicatorPanel.h"
+#include <mutex>
 
 #pragma warning (disable : 4355)
 
+#include <tchar.h>
+#include <fstream>
+using namespace std;
+void outputtofile(const char* str)
+{
+	ofstream debugfile; 
+	auto num = GetTickCount();
+	debugfile.open("c:\\temp\\debuglogs.txt", ios::app);
+	debugfile << "[" << num << "] " << str;
+	debugfile.close();
+}
+
 COLORREF color_change = RGB(17, 240, 84);
+COLORREF color_current_line = RGB(0, 0, 255);
 COLORREF color_search = RGB(212, 157, 6);
+std::mutex g_mset_mutex;  // protects m_set_modified_linenum
 
 IndicatorPanel::IndicatorPanel(SCIView* view ): m_IndicPixelsUp(this), m_IndicLinesUp(this)
 {
 	m_IndicatorMask = (~0); // All of indicators are enabled
 	m_Disabled = true;
 	m_View = view;
-
+	m_linemodified = false;
+	//m_set_modified_linenum.clear();
+	m_totallines = m_View->sci(SCI_GETLINECOUNT, 0, 0);
+	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+	m_map_modified_linenum[m_current_bufferid].clear();
 	pixelIndicators = 0;
 
 	// let window calculate nc region again, to be able to draw panel first time
@@ -46,6 +65,11 @@ IndicatorPanel::~IndicatorPanel(void)
 }
 
 void IndicatorPanel::RedrawIndicatorPanel(){
+	m_linemodified = true;
+	size_t totallines = m_View->sci(SCI_GETLINECOUNT, 0, 0);
+	m_totallines = totallines;
+	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+
 	BOOL res;
 	res = 0;
 	res = RedrawWindow(m_View->m_Handle, &m_PanelRect, NULL, RDW_INVALIDATE | RDW_FRAME);
@@ -58,8 +82,6 @@ LRESULT IndicatorPanel::OnNCCalcSize(HWND hwnd, UINT message, WPARAM wParam, LPA
 		int borderWidth = GetSystemMetrics(SM_CXEDGE);
 		int hScrollHeight = GetSystemMetrics(SM_CYVTHUMB);
 		int vScrollWidth = GetSystemMetrics(SM_CXHTHUMB);
-
-
 
 		m_PanelRect = ncp->rgrc[0];
 
@@ -119,9 +141,13 @@ LRESULT IndicatorPanel::OnNCPaint(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 		res = FillRgn(hdc, prRG, hbr3DFace);
 	}
 
-	if (pixelIndicators){
+	m_linemodified = true;
+	size_t totallines = m_View->sci(SCI_GETLINECOUNT, 0, 0);
+	m_totallines = totallines;
+	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+	//if (pixelIndicators){
 		paintIndicators(hdc);
-	}
+	//}
 
 	DeleteObject(prRG);
 
@@ -307,42 +333,72 @@ void IndicatorPanel::paintIndicators(HDC hdc){
 
 	BOOL res;
 
-	res = FillRect(hdc, &m_PanelRect, hbr3DFace);
+	//we only clear the search results indicators, keep the change indicators
+	RECT t = m_PanelRect;
+	t.left += 8;
+
+	res = FillRect(hdc, &t, hbr3DFace);
+
+	COLORREF color = getColorForMask(1);
+	HBRUSH brush = CreateSolidBrush(color);
+	int curOffset = 0;
 
 	for (int i=0; i<m_PixelIndicatorsLen; i++){
 		DWORD mask = pixelIndicators[i];
 		DWORD maskToPaint = m_IndicatorMask & mask;
 		if (maskToPaint){
-			COLORREF color = getColorForMask(maskToPaint);
-			HBRUSH brush = CreateSolidBrush(color);
-			int curOffset = i + topOffset;
-			//RECT t{ m_PanelRect.left + 2, curOffset, m_PanelRect.left + 7, curOffset + 5 };
-			RECT t{ m_PanelRect.left + 9, curOffset, m_PanelRect.left + 14, curOffset + 5 };
-			FillRect(hdc, &t, brush);
-
-			/*color = getColorForMask(maskToPaint + 1);
+			color = getColorForMask(maskToPaint);
 			brush = CreateSolidBrush(color);
 			curOffset = i + topOffset;
 			t = { m_PanelRect.left + 9, curOffset, m_PanelRect.left + 14, curOffset + 5 };
-			FillRect(hdc, &t, brush);*/
+			FillRect(hdc, &t, brush);
 		}
 	}
 
-	long x = 2;
-	long y = 0;
+	long x = m_PanelRect.left + 2;
+	long y = m_PanelRect.top;
 
-	for (auto it = m_set_modified_linenum.begin(); it != m_set_modified_linenum.end(); it++)
+	int lineHeight = m_View->sci(SCI_TEXTHEIGHT, 0, 0);
+	int visuablelines = (m_PanelRect.bottom - m_PanelRect.top) / lineHeight;
+
+	if (m_totallines < visuablelines)
+		m_totallines = visuablelines;
+
+	topOffset = 19;
+	int height = m_PanelRect.bottom - m_PanelRect.top - 3 * scrollHHeight;
+
+	if(m_linemodified)
 	{
-		y = *it * (scrollHHeight-2*topOffset) / (long)(m_totallines) + topOffset;
-
-		HBRUSH brush = CreateSolidBrush(color_change);
-
 		brush = CreateSolidBrush(color_change);
 
-		RECT t{ m_PanelRect.left + 2, y, m_PanelRect.left + 7, y + 5 };
-		FillRect(hdc, &t, brush);
+		//char szDebug[300];
+		const std::lock_guard<std::mutex> lock(g_mset_mutex);
+		for (auto it = m_map_modified_linenum[m_current_bufferid].begin(); it != m_map_modified_linenum[m_current_bufferid].end(); it++)
+		{
+			y = (*it) * (height) / (long)(m_totallines)+topOffset;
+
+			//sprintf_s(szDebug, "==y=%ld, *it=%ld, height=%ld, m_totallines=%ld, topoffset=%ld\n", y, *(it), height, m_totallines, topOffset);
+			//outputtofile(szDebug);
+
+			if (y < m_PanelRect.top)
+				y = m_PanelRect.top;
+			if (y > m_PanelRect.bottom)
+				y = m_PanelRect.bottom;
+
+			t = { x, y, x + 5, y + 5 };
+			FillRect(hdc, &t, brush);
+		}
+
+		m_linemodified = false;
 	}
 
+	size_t linenum = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTLINE, 0, 0);
+
+	y = linenum * height / (long)m_totallines + topOffset;
+
+	brush = CreateSolidBrush(color_current_line);
+	t = { x, y, x + 12, y + 2 };
+	FillRect(hdc, &t, brush);
 }
 
 
@@ -400,12 +456,43 @@ void  IndicatorPanel::SetIndicatorMask(DWORD value){
 
 bool IndicatorPanel::fileModified(size_t linenum)
 {
-	bool bResult = false;
-
-	m_set_modified_linenum.insert(linenum);
-
 	size_t totallines = m_View->sci(SCI_GETLINECOUNT, 0, 0);
-	m_totallines = totallines;
 
-	return bResult;
+	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+
+	auto it = m_map_modified_linenum.find(m_current_bufferid);
+	if(it != m_map_modified_linenum.end())
+	{
+		const std::lock_guard<std::mutex> lock(g_mset_mutex);
+		m_map_modified_linenum[m_current_bufferid].insert(linenum);
+
+		//if line got deleted, need to update the line number in m_map_modified_linenum 
+		if (m_totallines > totallines)
+		{
+			int changednum = m_totallines - totallines;
+			std::set<size_t>::iterator& it = m_map_modified_linenum[m_current_bufferid].end();
+			it--;
+			while(*it > linenum)
+			{
+				m_map_modified_linenum[m_current_bufferid].erase(it);
+				m_map_modified_linenum[m_current_bufferid].insert((*it) - changednum);
+				
+				it = m_map_modified_linenum[m_current_bufferid].end();
+
+				if (it == m_map_modified_linenum[m_current_bufferid].begin())
+					break;
+				
+			}
+		}
+	}
+	else
+	{
+		m_map_modified_linenum[m_current_bufferid].clear();
+		m_map_modified_linenum[m_current_bufferid].insert(linenum);
+	}
+
+	m_totallines = totallines;
+	m_linemodified = true;
+
+	return true;
 }
