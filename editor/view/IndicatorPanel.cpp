@@ -22,18 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma warning (disable : 4355)
 
-#include <tchar.h>
-#include <fstream>
-using namespace std;
-void outputtofile(const char* str)
-{
-	ofstream debugfile; 
-	auto num = GetTickCount();
-	debugfile.open("c:\\temp\\debuglogs.txt", ios::app);
-	debugfile << "[" << num << "] " << str;
-	debugfile.close();
-}
-
 COLORREF color_change = RGB(17, 240, 84);
 COLORREF color_current_line = RGB(0, 0, 255);
 COLORREF color_search = RGB(212, 157, 6);
@@ -49,7 +37,6 @@ IndicatorPanel::IndicatorPanel(SCIView* view ): m_IndicPixelsUp(this), m_IndicLi
 	//m_set_modified_linenum.clear();
 	m_totallines = m_View->sci(SCI_GETLINECOUNT, 0, 0);
 	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
-	outputtofile("==A\n");
 	m_map_modified_linenum[m_current_bufferid].clear();
 	pixelIndicators = 0;
 
@@ -319,12 +306,10 @@ void IndicatorPanel::paintIndicators(){
 
 void IndicatorPanel::paintIndicators(HDC hdc){
 	
-	outputtofile("==E\n");
+	OutputDebugString(_T("==in paintIndicators"));
 
 	if (!pixelIndicators || m_Disabled)
 		return;
-
-	outputtofile("==F\n");
 
 	bool vscroll = hasStyle(m_View->m_Handle, WS_VSCROLL);
 	int scrollHHeight	= GetSystemMetrics(SM_CXHSCROLL);
@@ -345,10 +330,6 @@ void IndicatorPanel::paintIndicators(HDC hdc){
 	t.left += 8;
 
 	res = FillRect(hdc, &t, hbr3DFace);
-
-	//char szDebug[300];
-	//sprintf_s(szDebug, "==m_Indicators.size()=%ld\n", m_Indicators.size());
-	//outputtofile(szDebug);
 
 	if (m_Indicators.size() > 0)
 	{
@@ -394,7 +375,6 @@ void IndicatorPanel::paintIndicators(HDC hdc){
 
 	if(m_linemodified)
 	{
-		outputtofile("==D\n");
 		brush = CreateSolidBrush(color_change);
 
 		const std::lock_guard<std::mutex> lock(g_mset_mutex);
@@ -482,11 +462,9 @@ bool IndicatorPanel::fileModified(size_t linenum)
 
 	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
 
-	outputtofile("==B\n");
 	auto it = m_map_modified_linenum.find(m_current_bufferid);
 	if(it != m_map_modified_linenum.end())
 	{
-		outputtofile("==B1\n");
 		const std::lock_guard<std::mutex> lock(g_mset_mutex);
 		m_map_modified_linenum[m_current_bufferid].insert(linenum);
 
@@ -511,7 +489,6 @@ bool IndicatorPanel::fileModified(size_t linenum)
 	}
 	else
 	{
-		outputtofile("==B2\n");
 		m_map_modified_linenum[m_current_bufferid].clear();
 		m_map_modified_linenum[m_current_bufferid].insert(linenum);
 	}

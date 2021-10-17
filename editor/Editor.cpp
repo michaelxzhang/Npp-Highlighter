@@ -230,6 +230,15 @@ void CEditor::doOnFileModified(size_t linenum)
 	}
 }
 
+void CEditor::doOnRedraw()
+{
+	// provide messages to current view
+	int view = GetCurrentView(); // can be -1 what is not valid
+	if (view >= 0 && view < m_ViewsNumber) {
+		m_Views[view]->m_IndPanel.RedrawIndicatorPanel();
+	}
+}
+
 void CEditor::CallListener(TCHAR* method, int view, int file){
 	if (m_Listener == NULL)
 		return;
