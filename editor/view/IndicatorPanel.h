@@ -51,7 +51,7 @@ class IndicatorPanel
 	//std::set<size_t> m_set_modified_linenum;
 	ULONG_PTR      m_current_bufferid;
 	std::map<ULONG_PTR, std::set<size_t>> m_map_modified_linenum;
-
+	size_t         m_current_linenum = 0;
 public:
 	DWORD* pixelIndicators;
 	int  m_PixelIndicatorsLen;

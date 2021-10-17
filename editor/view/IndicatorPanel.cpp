@@ -42,12 +42,14 @@ std::mutex g_mset_mutex;  // protects m_set_modified_linenum
 IndicatorPanel::IndicatorPanel(SCIView* view ): m_IndicPixelsUp(this), m_IndicLinesUp(this)
 {
 	m_IndicatorMask = (~0); // All of indicators are enabled
-	m_Disabled = true;
+	m_Disabled = false;
 	m_View = view;
 	m_linemodified = false;
+	m_current_linenum = 1;
 	//m_set_modified_linenum.clear();
 	m_totallines = m_View->sci(SCI_GETLINECOUNT, 0, 0);
 	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+	outputtofile("==A\n");
 	m_map_modified_linenum[m_current_bufferid].clear();
 	pixelIndicators = 0;
 
@@ -219,6 +221,7 @@ void IndicatorPanel::GetIndicatorLines(int begin, int end){
 		DWORD tmp = m_View->sci(SCI_INDICATORALLONFOR, p, 0); 	
 		mask = mask | tmp;
 	}
+
 }
 
 void IndicatorPanel::GetIndicatorPixels(){
@@ -316,8 +319,12 @@ void IndicatorPanel::paintIndicators(){
 
 void IndicatorPanel::paintIndicators(HDC hdc){
 	
+	outputtofile("==E\n");
+
 	if (!pixelIndicators || m_Disabled)
 		return;
+
+	outputtofile("==F\n");
 
 	bool vscroll = hasStyle(m_View->m_Handle, WS_VSCROLL);
 	int scrollHHeight	= GetSystemMetrics(SM_CXHSCROLL);
@@ -338,6 +345,24 @@ void IndicatorPanel::paintIndicators(HDC hdc){
 	t.left += 8;
 
 	res = FillRect(hdc, &t, hbr3DFace);
+
+	//char szDebug[300];
+	//sprintf_s(szDebug, "==m_Indicators.size()=%ld\n", m_Indicators.size());
+	//outputtofile(szDebug);
+
+	if (m_Indicators.size() > 0)
+	{
+		TCHAR desc[300] = { 0 };
+		TCHAR out[350] = { 0 };
+		int langid = 0;
+
+		::SendMessage(nppData._nppHandle, NPPM_GETCURRENTLANGTYPE, NULL, (LPARAM)&langid);
+		::SendMessage(nppData._nppHandle, NPPM_GETLANGUAGEDESC, langid, NULL);
+		::SendMessage(nppData._nppHandle, NPPM_GETLANGUAGEDESC, langid, (LPARAM)desc);
+	
+		swprintf(out, 350, _T("%s    %d highlighted"), desc, m_Indicators.size());
+		::SendMessage(nppData._nppHandle, NPPM_SETSTATUSBAR, STATUSBAR_DOC_TYPE, (LPARAM)out);
+	}
 
 	COLORREF color = getColorForMask(1);
 	HBRUSH brush = CreateSolidBrush(color);
@@ -369,16 +394,13 @@ void IndicatorPanel::paintIndicators(HDC hdc){
 
 	if(m_linemodified)
 	{
+		outputtofile("==D\n");
 		brush = CreateSolidBrush(color_change);
 
-		//char szDebug[300];
 		const std::lock_guard<std::mutex> lock(g_mset_mutex);
 		for (auto it = m_map_modified_linenum[m_current_bufferid].begin(); it != m_map_modified_linenum[m_current_bufferid].end(); it++)
 		{
 			y = (*it) * (height) / (long)(m_totallines)+topOffset;
-
-			//sprintf_s(szDebug, "==y=%ld, *it=%ld, height=%ld, m_totallines=%ld, topoffset=%ld\n", y, *(it), height, m_totallines, topOffset);
-			//outputtofile(szDebug);
 
 			if (y < m_PanelRect.top)
 				y = m_PanelRect.top;
@@ -460,9 +482,11 @@ bool IndicatorPanel::fileModified(size_t linenum)
 
 	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
 
+	outputtofile("==B\n");
 	auto it = m_map_modified_linenum.find(m_current_bufferid);
 	if(it != m_map_modified_linenum.end())
 	{
+		outputtofile("==B1\n");
 		const std::lock_guard<std::mutex> lock(g_mset_mutex);
 		m_map_modified_linenum[m_current_bufferid].insert(linenum);
 
@@ -487,12 +511,15 @@ bool IndicatorPanel::fileModified(size_t linenum)
 	}
 	else
 	{
+		outputtofile("==B2\n");
 		m_map_modified_linenum[m_current_bufferid].clear();
 		m_map_modified_linenum[m_current_bufferid].insert(linenum);
 	}
 
 	m_totallines = totallines;
 	m_linemodified = true;
+
+	paintIndicators();
 
 	return true;
 }
