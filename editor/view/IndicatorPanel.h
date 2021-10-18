@@ -44,7 +44,6 @@ class IndicatorPanel
 
 	const static int m_PanelWidth = 14;
 
-	void ClearIndicators(int begin, int end);
 
 	bool           m_linemodified = false;
 	size_t         m_totallines = 0;
@@ -56,6 +55,8 @@ public:
 	DWORD* pixelIndicators;
 	int  m_PixelIndicatorsLen;
 
+	void ClearIndicators(int begin, int end);
+	
 	void GetIndicatorLines(int begin, int end);
 
 	void GetIndicatorPixels();
@@ -67,6 +68,8 @@ public:
 	COLORREF getColorForMask(DWORD mask);
 
 	bool fileModified(size_t linenum);
+	bool fileDoubleClicked();
+	bool fileSingleClicked();
 	
 	static bool hasStyle(HWND hwnd, int style);
 
@@ -92,8 +95,8 @@ public:
 		IndicatorPanel* m_IndPanel;
 		IndicatorLinesUpdater(IndicatorPanel* indPanel){
 			m_IndPanel = indPanel;
-			m_Begin = 0;
-			m_End = 0;
+			m_Begin = -1;
+			m_End = -1;
 		};
 
 		int m_Begin;
@@ -106,8 +109,8 @@ public:
 			m_IndPanel->GetIndicatorLines(m_Begin, m_End);
 			ForegroundIdleHook::getInstance()->add( &m_IndPanel->m_IndicPixelsUp);
 
-			m_Begin = 0;
-			m_End = 0;
+			m_Begin = -1;
+			m_End = -1;
 		};
 	};
 

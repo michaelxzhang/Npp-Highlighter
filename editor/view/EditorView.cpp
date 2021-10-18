@@ -95,11 +95,11 @@ void CEditorView::setIndicatorLinesUpdater(int begin, int end){
 	if (indicatorPixelsUpdater != NULL)
 		ForegroundIdleHook::getInstance()->remove(indicatorPixelsUpdater);
 
-	if (m_IndPanel.m_IndicLinesUp.m_Begin > begin || (m_IndPanel.m_IndicLinesUp.m_End == 0 /* first time */))
-		m_IndPanel.m_IndicLinesUp.m_Begin = begin;
+	//if (m_IndPanel.m_IndicLinesUp.m_Begin > begin || (m_IndPanel.m_IndicLinesUp.m_End == 0 /* first time */))
+	//	m_IndPanel.m_IndicLinesUp.m_Begin = begin;
 
-	if (end == -1 || m_IndPanel.m_IndicLinesUp.m_End < end )
-		m_IndPanel.m_IndicLinesUp.m_End = end;
+	//if (end == -1 || m_IndPanel.m_IndicLinesUp.m_End < end )
+	//	m_IndPanel.m_IndicLinesUp.m_End = end;
 
 	ForegroundIdleHook::getInstance()->add(&m_IndPanel.m_IndicLinesUp);
 }
@@ -109,16 +109,24 @@ void CEditorView::DoMessage(SCNotification* eventArgs){
 		case SCN_MODIFIED:
 			if (eventArgs->modificationType & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT)){
 				if (eventArgs->linesAdded != 0) // changes in more than one line
-					setIndicatorLinesUpdater(eventArgs->position,-1); // from position to bottom
+				{
+					OutputDebugString(_T("setIndicatorLinesUpdater 1"));
+					setIndicatorLinesUpdater(eventArgs->position, -1); // from position to bottom
+				}
 				else // changes in the single line, update only necessary positions
+				{
+					OutputDebugString(_T("setIndicatorLinesUpdater 2"));
 					setIndicatorLinesUpdater(eventArgs->position, eventArgs->position + eventArgs->length);
+				}
 			} else if (eventArgs->modificationType & ( SC_MOD_CHANGEINDICATOR)){
+				OutputDebugString(_T("setIndicatorLinesUpdater 3"));
 				// update only necessary positions
 				setIndicatorLinesUpdater(eventArgs->position, eventArgs->position  + eventArgs->length);
 			}
 			break;
 		case NPPN_BUFFERACTIVATED:
 			// update all lines
+			OutputDebugString(_T("setIndicatorLinesUpdater 4"));
 			setIndicatorLinesUpdater(-1,-1);
 			break;
 		case SCN_ZOOM:{
@@ -128,6 +136,7 @@ void CEditorView::DoMessage(SCNotification* eventArgs){
 		}
 		case SCN_MARGINCLICK:
 			if (eventArgs->margin == 2){ // click above fold symbol
+				OutputDebugString(_T("setIndicatorLinesUpdater 5"));
 				setIndicatorLinesUpdater(-1,-1);
 			}
 			break;

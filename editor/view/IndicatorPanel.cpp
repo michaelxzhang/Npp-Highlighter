@@ -15,10 +15,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <mutex>
+#include <atlstr.h>
 #include "npp\Scintilla.h"
 #include "npp\PluginDefinition.h"
 #include "IndicatorPanel.h"
-#include <mutex>
 
 #pragma warning (disable : 4355)
 
@@ -134,6 +135,9 @@ LRESULT IndicatorPanel::OnNCPaint(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 	size_t totallines = m_View->sci(SCI_GETLINECOUNT, 0, 0);
 	m_totallines = totallines;
 	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+
+	OutputDebugString(_T("==OnNCPaint paintIndicators"));
+
 	//if (pixelIndicators){
 		paintIndicators(hdc);
 	//}
@@ -168,11 +172,15 @@ void IndicatorPanel::ClearIndicators(int begin, int end){
 }
 
 void IndicatorPanel::GetIndicatorLines(int begin, int end){ 
+
+	CString s;
+	s.Format(_T("begin=%d, end=%d\n"), begin, end);
+	::OutputDebugString(s);
+
 	ClearIndicators(begin, end);
 
 	if (begin < 0)
 		begin = 0;
-
 
 	if (end < 0)
 		end = m_View->sci(SCI_GETLENGTH, 0, 0);
@@ -182,20 +190,29 @@ void IndicatorPanel::GetIndicatorLines(int begin, int end){
 	int line = m_View->sci(SCI_LINEFROMPOSITION, begin, 0);
 	int lineende = m_View->sci(SCI_GETLINEENDPOSITION, line, 0);;
 
+	s.Format(_T("line=%d, lineende=%d, begin=%d, end=%d\n"), line, lineende, begin, end);
+	::OutputDebugString(s);
+
 	for (int p=begin; p < end; p++){
 
 		// move indicator mask for line into the list of masks
 		// if end of line or end of file
-		if (lineende <= p || p == end-1){ // new line
+		if (lineende <= p || p == end-1){ // new line 
 
 			// dont save empty masks
 			if (mask){ // save mask from last line
+
+				s.Format(_T("linenum=%d\n"), line);
+				::OutputDebugString(s);
 
 				// get position of line in the view
 				DWORD viewPos = m_View->sci(SCI_VISIBLEFROMDOCLINE, line, 0);
 				if (viewPos >= 0){
 					LineMask lm = {viewPos, mask};
 					m_Indicators.push_back(lm);
+
+					s.Format(_T("linenum=%d\n"), line);
+					::OutputDebugString(s);
 				}
 			}
 
@@ -298,6 +315,8 @@ void IndicatorPanel::GetIndicatorPixels(){
 
 void IndicatorPanel::paintIndicators(){
 	HDC hdc = GetWindowDC(m_View->m_Handle);
+
+	OutputDebugString(_T("==paintIndicators paintIndicators"));
 
 	paintIndicators(hdc);
 
@@ -453,6 +472,8 @@ DWORD IndicatorPanel::GetIndicatorMask(){
 void  IndicatorPanel::SetIndicatorMask(DWORD value){
 	m_IndicatorMask = value;
 
+	OutputDebugString(_T("==SetIndicatorMask paintIndicators"));
+
 	paintIndicators();
 }
 
@@ -496,7 +517,28 @@ bool IndicatorPanel::fileModified(size_t linenum)
 	m_totallines = totallines;
 	m_linemodified = true;
 
+	OutputDebugString(_T("==fileModified paintIndicators"));
 	paintIndicators();
+
+	return true;
+}
+
+bool IndicatorPanel::fileDoubleClicked()
+{
+	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+
+	OutputDebugString(_T("fileDoubleClicked"));
+	::SendMessage(nppData._nppHandle, NPPM_MENUCOMMAND, 0, (LPARAM)43030);
+
+	return true;
+}
+
+bool IndicatorPanel::fileSingleClicked()
+{
+	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+
+	OutputDebugString(_T("fileSingleClicked"));
+	::SendMessage(nppData._nppHandle, NPPM_MENUCOMMAND, 0, (LPARAM)43031);
 
 	return true;
 }

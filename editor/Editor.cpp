@@ -230,12 +230,21 @@ void CEditor::doOnFileModified(size_t linenum)
 	}
 }
 
-void CEditor::doOnRedraw()
+void CEditor::doOnClick()
 {
 	// provide messages to current view
 	int view = GetCurrentView(); // can be -1 what is not valid
 	if (view >= 0 && view < m_ViewsNumber) {
-		m_Views[view]->m_IndPanel.RedrawIndicatorPanel();
+		m_Views[view]->m_IndPanel.fileSingleClicked();
+	}
+}
+
+void CEditor::doOnDoubleClick()
+{
+	// provide messages to current view
+	int view = GetCurrentView(); // can be -1 what is not valid
+	if (view >= 0 && view < m_ViewsNumber) {
+		m_Views[view]->m_IndPanel.fileDoubleClicked();
 	}
 }
 
