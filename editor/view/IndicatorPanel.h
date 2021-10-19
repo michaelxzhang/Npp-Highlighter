@@ -49,7 +49,6 @@ class IndicatorPanel
 	size_t         m_totallines = 0;
 	//std::set<size_t> m_set_modified_linenum;
 	ULONG_PTR      m_current_bufferid;
-	std::map<ULONG_PTR, std::set<size_t>> m_map_modified_linenum;
 	size_t         m_current_linenum = 0;
 public:
 	DWORD* pixelIndicators;
@@ -70,7 +69,8 @@ public:
 	bool fileModified(size_t linenum);
 	bool fileDoubleClicked();
 	bool fileSingleClicked();
-	
+	bool BufferActivated(ULONG_PTR bufferid);
+
 	static bool hasStyle(HWND hwnd, int style);
 
 	LRESULT OnNCCalcSize(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);

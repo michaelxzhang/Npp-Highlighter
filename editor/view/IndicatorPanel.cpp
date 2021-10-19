@@ -27,6 +27,7 @@ COLORREF color_change = RGB(17, 240, 84);
 COLORREF color_current_line = RGB(0, 0, 255);
 COLORREF color_search = RGB(212, 157, 6);
 std::mutex g_mset_mutex;  // protects m_set_modified_linenum
+std::map<ULONG_PTR, std::set<size_t>> map_modified_linenum;
 
 IndicatorPanel::IndicatorPanel(SCIView* view ): m_IndicPixelsUp(this), m_IndicLinesUp(this)
 {
@@ -38,7 +39,7 @@ IndicatorPanel::IndicatorPanel(SCIView* view ): m_IndicPixelsUp(this), m_IndicLi
 	//m_set_modified_linenum.clear();
 	m_totallines = m_View->sci(SCI_GETLINECOUNT, 0, 0);
 	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
-	m_map_modified_linenum[m_current_bufferid].clear();
+	map_modified_linenum[m_current_bufferid].clear();
 	pixelIndicators = 0;
 
 	// let window calculate nc region again, to be able to draw panel first time
@@ -136,7 +137,7 @@ LRESULT IndicatorPanel::OnNCPaint(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 	m_totallines = totallines;
 	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
 
-	OutputDebugString(_T("==OnNCPaint paintIndicators"));
+	//OutputDebugString(_T("==OnNCPaint paintIndicators"));
 
 	//if (pixelIndicators){
 		paintIndicators(hdc);
@@ -173,12 +174,6 @@ void IndicatorPanel::ClearIndicators(int begin, int end){
 
 void IndicatorPanel::GetIndicatorLines(int begin, int end){ 
 
-	CString s;
-	s.Format(_T("begin=%d, end=%d\n"), begin, end);
-	::OutputDebugString(s);
-
-	ClearIndicators(begin, end);
-
 	if (begin < 0)
 		begin = 0;
 
@@ -190,9 +185,6 @@ void IndicatorPanel::GetIndicatorLines(int begin, int end){
 	int line = m_View->sci(SCI_LINEFROMPOSITION, begin, 0);
 	int lineende = m_View->sci(SCI_GETLINEENDPOSITION, line, 0);;
 
-	s.Format(_T("line=%d, lineende=%d, begin=%d, end=%d\n"), line, lineende, begin, end);
-	::OutputDebugString(s);
-
 	for (int p=begin; p < end; p++){
 
 		// move indicator mask for line into the list of masks
@@ -201,18 +193,11 @@ void IndicatorPanel::GetIndicatorLines(int begin, int end){
 
 			// dont save empty masks
 			if (mask){ // save mask from last line
-
-				s.Format(_T("linenum=%d\n"), line);
-				::OutputDebugString(s);
-
 				// get position of line in the view
 				DWORD viewPos = m_View->sci(SCI_VISIBLEFROMDOCLINE, line, 0);
 				if (viewPos >= 0){
 					LineMask lm = {viewPos, mask};
 					m_Indicators.push_back(lm);
-
-					s.Format(_T("linenum=%d\n"), line);
-					::OutputDebugString(s);
 				}
 			}
 
@@ -316,8 +301,6 @@ void IndicatorPanel::GetIndicatorPixels(){
 void IndicatorPanel::paintIndicators(){
 	HDC hdc = GetWindowDC(m_View->m_Handle);
 
-	OutputDebugString(_T("==paintIndicators paintIndicators"));
-
 	paintIndicators(hdc);
 
 	ReleaseDC(m_View->m_Handle, hdc);
@@ -325,8 +308,6 @@ void IndicatorPanel::paintIndicators(){
 
 void IndicatorPanel::paintIndicators(HDC hdc){
 	
-	OutputDebugString(_T("==in paintIndicators"));
-
 	if (!pixelIndicators || m_Disabled)
 		return;
 
@@ -397,7 +378,7 @@ void IndicatorPanel::paintIndicators(HDC hdc){
 		brush = CreateSolidBrush(color_change);
 
 		const std::lock_guard<std::mutex> lock(g_mset_mutex);
-		for (auto it = m_map_modified_linenum[m_current_bufferid].begin(); it != m_map_modified_linenum[m_current_bufferid].end(); it++)
+		for (auto it = map_modified_linenum[m_current_bufferid].begin(); it != map_modified_linenum[m_current_bufferid].end(); it++)
 		{
 			y = (*it) * (height) / (long)(m_totallines)+topOffset;
 
@@ -472,8 +453,6 @@ DWORD IndicatorPanel::GetIndicatorMask(){
 void  IndicatorPanel::SetIndicatorMask(DWORD value){
 	m_IndicatorMask = value;
 
-	OutputDebugString(_T("==SetIndicatorMask paintIndicators"));
-
 	paintIndicators();
 }
 
@@ -483,26 +462,26 @@ bool IndicatorPanel::fileModified(size_t linenum)
 
 	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
 
-	auto it = m_map_modified_linenum.find(m_current_bufferid);
-	if(it != m_map_modified_linenum.end())
+	auto it = map_modified_linenum.find(m_current_bufferid);
+	if(it != map_modified_linenum.end())
 	{
 		const std::lock_guard<std::mutex> lock(g_mset_mutex);
-		m_map_modified_linenum[m_current_bufferid].insert(linenum);
+		map_modified_linenum[m_current_bufferid].insert(linenum);
 
 		//if line got deleted, need to update the line number in m_map_modified_linenum 
 		if (m_totallines > totallines)
 		{
 			int changednum = m_totallines - totallines;
-			std::set<size_t>::iterator& it = m_map_modified_linenum[m_current_bufferid].end();
+			std::set<size_t>::iterator& it = map_modified_linenum[m_current_bufferid].end();
 			it--;
 			while(*it > linenum)
 			{
-				m_map_modified_linenum[m_current_bufferid].erase(it);
-				m_map_modified_linenum[m_current_bufferid].insert((*it) - changednum);
+				map_modified_linenum[m_current_bufferid].erase(it);
+				map_modified_linenum[m_current_bufferid].insert((*it) - changednum);
 				
-				it = m_map_modified_linenum[m_current_bufferid].end();
+				it = map_modified_linenum[m_current_bufferid].end();
 
-				if (it == m_map_modified_linenum[m_current_bufferid].begin())
+				if (it == map_modified_linenum[m_current_bufferid].begin())
 					break;
 				
 			}
@@ -510,14 +489,13 @@ bool IndicatorPanel::fileModified(size_t linenum)
 	}
 	else
 	{
-		m_map_modified_linenum[m_current_bufferid].clear();
-		m_map_modified_linenum[m_current_bufferid].insert(linenum);
+		map_modified_linenum[m_current_bufferid].clear();
+		map_modified_linenum[m_current_bufferid].insert(linenum);
 	}
 
 	m_totallines = totallines;
 	m_linemodified = true;
 
-	OutputDebugString(_T("==fileModified paintIndicators"));
 	paintIndicators();
 
 	return true;
@@ -527,7 +505,9 @@ bool IndicatorPanel::fileDoubleClicked()
 {
 	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
 
-	OutputDebugString(_T("fileDoubleClicked"));
+	::SendMessage(nppData._nppHandle, NPPM_MENUCOMMAND, 0, (LPARAM)43031);
+	ClearIndicators(-1, -1);
+
 	::SendMessage(nppData._nppHandle, NPPM_MENUCOMMAND, 0, (LPARAM)43030);
 
 	return true;
@@ -537,8 +517,37 @@ bool IndicatorPanel::fileSingleClicked()
 {
 	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
 
-	OutputDebugString(_T("fileSingleClicked"));
 	::SendMessage(nppData._nppHandle, NPPM_MENUCOMMAND, 0, (LPARAM)43031);
+	ClearIndicators(-1, -1);
 
+	RedrawIndicatorPanel();
+
+	return true;
+}
+
+bool IndicatorPanel::BufferActivated(ULONG_PTR bufferid)
+{
+	/*size_t totallines = m_View->sci(SCI_GETLINECOUNT, 0, 0);
+
+	CString s;
+	s.Format(_T("BufferActivated id=%lx\n"), bufferid);
+	::OutputDebugString(s);
+
+	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+	s.Format(_T("BufferActivated m_current_bufferid=%lx\n"), m_current_bufferid);
+	::OutputDebugString(s);
+
+	auto it = map_modified_linenum.find(m_current_bufferid);
+	if (it == map_modified_linenum.end())
+	{
+		::OutputDebugString(_T("clear buffer"));
+		map_modified_linenum[m_current_bufferid].clear();
+	}
+
+	m_totallines = totallines;
+	m_linemodified = true;
+
+	RedrawIndicatorPanel();
+	*/
 	return true;
 }
