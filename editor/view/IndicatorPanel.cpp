@@ -133,15 +133,8 @@ LRESULT IndicatorPanel::OnNCPaint(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 	}
 
 	m_linemodified = true;
-	size_t totallines = m_View->sci(SCI_GETLINECOUNT, 0, 0);
-	m_totallines = totallines;
-	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
 
-	//OutputDebugString(_T("==OnNCPaint paintIndicators"));
-
-	//if (pixelIndicators){
-		paintIndicators(hdc);
-	//}
+	paintIndicators();
 
 	DeleteObject(prRG);
 
@@ -173,6 +166,8 @@ void IndicatorPanel::ClearIndicators(int begin, int end){
 }
 
 void IndicatorPanel::GetIndicatorLines(int begin, int end){ 
+
+	ClearIndicators(-1, -1);
 
 	if (begin < 0)
 		begin = 0;
@@ -308,18 +303,12 @@ void IndicatorPanel::paintIndicators(){
 
 void IndicatorPanel::paintIndicators(HDC hdc){
 	
-	if (!pixelIndicators || m_Disabled)
+	if ( m_Disabled)
 		return;
 
 	bool vscroll = hasStyle(m_View->m_Handle, WS_VSCROLL);
 	int scrollHHeight	= GetSystemMetrics(SM_CXHSCROLL);
 	HBRUSH hbr3DFace = (HBRUSH)GetSysColorBrush(COLOR_3DFACE); 
-
-	HPEN hpen, oldPen;
-	//hpen = CreatePen(PS_SOLID, 1, RGB(0, 255, 0));
-
-	// Select the new pen and brush, and then draw.
-	//oldPen = (HPEN)SelectObject(hdc, hpen);
 
 	int topOffset = vscroll ? m_PanelRect.top + scrollHHeight : m_PanelRect.top;
 
@@ -327,7 +316,7 @@ void IndicatorPanel::paintIndicators(HDC hdc){
 
 	//we only clear the search results indicators, keep the change indicators
 	RECT t = m_PanelRect;
-	t.left += 8;
+	t.left += 20;
 
 	res = FillRect(hdc, &t, hbr3DFace);
 
@@ -347,19 +336,8 @@ void IndicatorPanel::paintIndicators(HDC hdc){
 
 	COLORREF color = getColorForMask(1);
 	HBRUSH brush = CreateSolidBrush(color);
-	int curOffset = 0;
+	long curOffset = 0;
 
-	for (int i=0; i<m_PixelIndicatorsLen; i++){
-		DWORD mask = pixelIndicators[i];
-		DWORD maskToPaint = m_IndicatorMask & mask;
-		if (maskToPaint){
-			color = getColorForMask(maskToPaint);
-			brush = CreateSolidBrush(color);
-			curOffset = i + topOffset;
-			t = { m_PanelRect.left + 9, curOffset, m_PanelRect.left + 14, curOffset + 5 };
-			FillRect(hdc, &t, brush);
-		}
-	}
 
 	long x = m_PanelRect.left + 2;
 	long y = m_PanelRect.top;
@@ -372,6 +350,37 @@ void IndicatorPanel::paintIndicators(HDC hdc){
 
 	topOffset = 19;
 	int height = m_PanelRect.bottom - m_PanelRect.top - 3 * scrollHHeight;
+
+	DWORD mask = 1;
+	DWORD prev_mask = 1;
+	color = getColorForMask(mask);
+	brush = CreateSolidBrush(color);
+
+	for (auto it = m_Indicators.begin(); it != m_Indicators.end(); it++) 
+	{
+		mask = it->mask;
+		if (mask) 
+		{
+			if(mask != prev_mask)
+			{
+				color = getColorForMask(mask);
+				brush = CreateSolidBrush(color);
+			}
+			
+			if(brush != NULL)
+			{
+				prev_mask = mask;
+				curOffset = (it->line) * (height) / (long)(m_totallines)+topOffset;
+				if (curOffset < m_PanelRect.top)
+					curOffset = m_PanelRect.top;
+				if (curOffset > m_PanelRect.bottom)
+					curOffset = m_PanelRect.bottom;
+
+				t = { m_PanelRect.left + 9, curOffset, m_PanelRect.left + 14, curOffset + 5 };
+				FillRect(hdc, &t, brush);
+			}
+		}
+	}
 
 	if(m_linemodified)
 	{
@@ -399,8 +408,10 @@ void IndicatorPanel::paintIndicators(HDC hdc){
 	y = linenum * height / (long)m_totallines + topOffset;
 
 	brush = CreateSolidBrush(color_current_line);
-	t = { x, y, x + 12, y + 2 };
+	t = { x, y, x + 14, y + 2 };
 	FillRect(hdc, &t, brush);
+
+	DeleteObject(brush);
 }
 
 
@@ -505,10 +516,9 @@ bool IndicatorPanel::fileDoubleClicked()
 {
 	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
 
-	::SendMessage(nppData._nppHandle, NPPM_MENUCOMMAND, 0, (LPARAM)43031);
-	ClearIndicators(-1, -1);
+	::SendMessage(nppData._nppHandle, NPPM_MENUCOMMAND, 0, (LPARAM)43031);    //NPP MENU CMD: SEARCH_UNMARKALLEXT5
 
-	::SendMessage(nppData._nppHandle, NPPM_MENUCOMMAND, 0, (LPARAM)43030);
+	::SendMessage(nppData._nppHandle, NPPM_MENUCOMMAND, 0, (LPARAM)43030);    //NPP MENU CMD: SEARCH_MARKALLEXT5
 
 	return true;
 }
@@ -517,8 +527,7 @@ bool IndicatorPanel::fileSingleClicked()
 {
 	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
 
-	::SendMessage(nppData._nppHandle, NPPM_MENUCOMMAND, 0, (LPARAM)43031);
-	ClearIndicators(-1, -1);
+	::SendMessage(nppData._nppHandle, NPPM_MENUCOMMAND, 0, (LPARAM)43031);    //NPP MENU CMD: SEARCH_UNMARKALLEXT5
 
 	RedrawIndicatorPanel();
 
@@ -527,27 +536,5 @@ bool IndicatorPanel::fileSingleClicked()
 
 bool IndicatorPanel::BufferActivated(ULONG_PTR bufferid)
 {
-	/*size_t totallines = m_View->sci(SCI_GETLINECOUNT, 0, 0);
-
-	CString s;
-	s.Format(_T("BufferActivated id=%lx\n"), bufferid);
-	::OutputDebugString(s);
-
-	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
-	s.Format(_T("BufferActivated m_current_bufferid=%lx\n"), m_current_bufferid);
-	::OutputDebugString(s);
-
-	auto it = map_modified_linenum.find(m_current_bufferid);
-	if (it == map_modified_linenum.end())
-	{
-		::OutputDebugString(_T("clear buffer"));
-		map_modified_linenum[m_current_bufferid].clear();
-	}
-
-	m_totallines = totallines;
-	m_linemodified = true;
-
-	RedrawIndicatorPanel();
-	*/
 	return true;
 }

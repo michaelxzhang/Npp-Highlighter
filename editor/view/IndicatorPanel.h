@@ -107,6 +107,7 @@ public:
 				return;
 
 			m_IndPanel->GetIndicatorLines(m_Begin, m_End);
+			m_IndPanel->RedrawIndicatorPanel();
 			ForegroundIdleHook::getInstance()->add( &m_IndPanel->m_IndicPixelsUp);
 
 			m_Begin = -1;
@@ -122,11 +123,11 @@ public:
 			if (m_IndPanel->m_Disabled)
 				return;
 
-			m_IndPanel->GetIndicatorPixels();
+			/*m_IndPanel->GetIndicatorPixels();
 			if (m_IndPanel->m_PixelIndicatorsLen > 0)
 			{
 				m_IndPanel->RedrawIndicatorPanel(); //m_View->paintIndicators();
-			}
+			}*/
 		};
 	};
 
