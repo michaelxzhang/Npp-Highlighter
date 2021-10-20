@@ -160,7 +160,7 @@ void CEditor::doOnMessage(SCNotification* eventArgs){
 	if (view >= 0 && view < m_ViewsNumber){
 		m_Views[view]->DoMessage(eventArgs);
 	}
-
+	/*
 	if (m_Listener==NULL)
 		return ;
 
@@ -219,6 +219,7 @@ void CEditor::doOnMessage(SCNotification* eventArgs){
 
 		CallListener(method2, view, pos);
 	}
+	*/
 }
 
 void CEditor::doOnFileModified(size_t linenum)
