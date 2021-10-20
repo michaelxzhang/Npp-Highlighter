@@ -469,6 +469,8 @@ void  IndicatorPanel::SetIndicatorMask(DWORD value){
 
 bool IndicatorPanel::fileModified(size_t linenum)
 {
+	::OutputDebugString(_T("fileModified"));
+
 	size_t totallines = m_View->sci(SCI_GETLINECOUNT, 0, 0);
 
 	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
@@ -501,7 +503,7 @@ bool IndicatorPanel::fileModified(size_t linenum)
 	else
 	{
 		map_modified_linenum[m_current_bufferid].clear();
-		map_modified_linenum[m_current_bufferid].insert(linenum);
+		//map_modified_linenum[m_current_bufferid].insert(linenum);
 	}
 
 	m_totallines = totallines;
@@ -531,10 +533,5 @@ bool IndicatorPanel::fileSingleClicked()
 
 	RedrawIndicatorPanel();
 
-	return true;
-}
-
-bool IndicatorPanel::BufferActivated(ULONG_PTR bufferid)
-{
 	return true;
 }

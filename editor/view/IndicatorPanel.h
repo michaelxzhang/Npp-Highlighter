@@ -69,7 +69,6 @@ public:
 	bool fileModified(size_t linenum);
 	bool fileDoubleClicked();
 	bool fileSingleClicked();
-	bool BufferActivated(ULONG_PTR bufferid);
 
 	static bool hasStyle(HWND hwnd, int style);
 
