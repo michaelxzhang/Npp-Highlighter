@@ -7,7 +7,7 @@
 
 STRINGTABLE
 BEGIN
-1 "jN Plugin for Notepad++\n© Eugen Kremer, 2020\ngithub.com/sieukrem/jn-npp-plugin"
+1 "Highlighter Plugin for Notepad++\n© Michael Zhang\ngithub.com/michaelxzhang/jn-npp-plugin-enhanced.git"
 END
 
 1 VERSIONINFO
