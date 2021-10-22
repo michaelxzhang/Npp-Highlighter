@@ -9,8 +9,9 @@ Highlighter disabled the javascript functions, only use the bar to display the c
 ![Screenshot](https://github.com/michaelxzhang/jn-npp-plugin-enhanced/blob/d300e34f2954998e37cb654c7b2546c84b59489d/Capture.JPG)
 
 ## Features
-- Highlight the changed lines
-- Highlight the word selected by double click
+- Highlight the changed lines on the right side bar
+- Highlight the word selected by double click on the right side bar
+- Indicate the current line position on the right side bar
 
 ## To-dos
 - At the begining of each line, put a mark if line content changed
