@@ -1,7 +1,6 @@
 /deploy/\[Notepad++ Directory\]/plugins/jN.dll
 /deploy/*.zip
 Debug
-Release
 /*.ncb
 /Interfaces.h
 /editor_i.c
@@ -10,3 +9,21 @@ Release
 /project.tlb
 /.vs
 /*.opensdf
+/Release/Highlighter.tlog
+/Release/jN.tlog
+*.obj
+*.iobj
+*.ipdb
+/Release/vc142.pdb
+/Release/res.res
+/Release/jN.vcxproj.FileListAbsolute.txt
+/Release/jN.pdb
+/Release/jN.log
+/Release/jN.lib
+/Release/jN.exp
+/Release/jN.dll.recipe
+/Release/jN.Build.CppClean.log
+/Release/Highlighter.pdb
+/Release/Highlighter.lib
+/Release/Highlighter.exp
+/Release/Highlighter.dll.recipe
