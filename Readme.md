@@ -16,3 +16,6 @@ Highlighter disabled the javascript functions, only use the bar to display the c
 - At the begining of each line, put a mark if line content changed
 - Improve the performance when dealing with huge files
 - Allow user change the color?
+
+## Install
+Download the Highlighter.dll under Release folder, navigage to your Notepad++ plugin folder, create a folder Highlighter, put the Highlighter.dll under it. Restart Notepad++
