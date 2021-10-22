@@ -5,7 +5,7 @@ Highlighter allows you to highlight the changed part and double click selected t
 Many thanks to Sieukrem, this plugin is based on his plugin - jN, from here
 [https://github.com/sieukrem/jn-npp-plugin](https://github.com/sieukrem/jn-npp-plugin)
 
-Highlighter disabled the javascript functions, only use the bar to display the changed and highlighted results.
+Highlighter disabled the javascript functions from jN, only use the bar to display the changed and highlighted results.
 ![Screenshot](https://github.com/michaelxzhang/jn-npp-plugin-enhanced/blob/d300e34f2954998e37cb654c7b2546c84b59489d/Capture.JPG)
 
 ## Features
