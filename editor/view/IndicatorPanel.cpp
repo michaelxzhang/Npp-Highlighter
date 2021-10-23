@@ -23,9 +23,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma warning (disable : 4355)
 
-COLORREF color_change = RGB(17, 240, 84);
-COLORREF color_current_line = RGB(0, 0, 255);
-COLORREF color_search = RGB(212, 157, 6);
+COLORREF g_color_change = RGB(17, 240, 84);
+COLORREF g_color_current_line = RGB(0, 0, 255);
+COLORREF g_color_search = RGB(212, 157, 6);
+long g_indicator_width  = 5;
+long g_indicator_height = 5;
 std::mutex g_mset_mutex;  // protects m_set_modified_linenum
 std::map<ULONG_PTR, std::set<size_t>> map_modified_linenum;
 
@@ -348,8 +350,8 @@ void IndicatorPanel::paintIndicators(HDC hdc){
 	if (m_totallines < visuablelines)
 		m_totallines = visuablelines;
 
-	topOffset = 19;
-	int height = m_PanelRect.bottom - m_PanelRect.top - 3 * scrollHHeight;
+	bool hscroll = hasStyle(m_View->m_Handle, WS_HSCROLL);
+	int height = m_PanelRect.bottom - m_PanelRect.top - (2 + hscroll) * scrollHHeight;
 
 	DWORD mask = 1;
 	DWORD prev_mask = 1;
@@ -376,7 +378,9 @@ void IndicatorPanel::paintIndicators(HDC hdc){
 				if (curOffset > m_PanelRect.bottom)
 					curOffset = m_PanelRect.bottom;
 
-				t = { m_PanelRect.left + 9, curOffset, m_PanelRect.left + 14, curOffset + 5 };
+				long tx = m_PanelRect.left + g_indicator_width + 4;
+				t = { tx, curOffset, tx+g_indicator_width, curOffset + g_indicator_height };
+
 				FillRect(hdc, &t, brush);
 			}
 		}
@@ -384,7 +388,7 @@ void IndicatorPanel::paintIndicators(HDC hdc){
 
 	if(m_linemodified)
 	{
-		brush = CreateSolidBrush(color_change);
+		brush = CreateSolidBrush(g_color_change);
 
 		const std::lock_guard<std::mutex> lock(g_mset_mutex);
 		for (auto it = map_modified_linenum[m_current_bufferid].begin(); it != map_modified_linenum[m_current_bufferid].end(); it++)
@@ -396,7 +400,7 @@ void IndicatorPanel::paintIndicators(HDC hdc){
 			if (y > m_PanelRect.bottom)
 				y = m_PanelRect.bottom;
 
-			t = { x, y, x + 5, y + 5 };
+			t = { x, y, x + g_indicator_width, y + g_indicator_height };
 			FillRect(hdc, &t, brush);
 		}
 
@@ -407,7 +411,7 @@ void IndicatorPanel::paintIndicators(HDC hdc){
 
 	y = linenum * height / (long)m_totallines + topOffset;
 
-	brush = CreateSolidBrush(color_current_line);
+	brush = CreateSolidBrush(g_color_current_line);
 	t = { x, y, x + 14, y + 2 };
 	FillRect(hdc, &t, brush);
 
@@ -503,7 +507,6 @@ bool IndicatorPanel::fileModified(size_t linenum)
 	else
 	{
 		map_modified_linenum[m_current_bufferid].clear();
-		//map_modified_linenum[m_current_bufferid].insert(linenum);
 	}
 
 	m_totallines = totallines;
