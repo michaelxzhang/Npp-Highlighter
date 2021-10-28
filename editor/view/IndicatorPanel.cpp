@@ -520,10 +520,6 @@ bool IndicatorPanel::fileModified(size_t linenum)
 	auto it = g_map_modified_linenum.find(m_current_bufferid);
 	if(it != g_map_modified_linenum.end())
 	{
-		//const std::lock_guard<std::mutex> lock(g_mset_mutex);
-		g_map_modified_linenum[m_current_bufferid].insert(linenum);
-		g_map_modified_indicator[m_current_bufferid].insert(linenum*m_draw_height/(totallines*g_indicator_height));
-
 		s.Format(_T("file modified, indicator num=%d\n"), linenum * m_draw_height / (totallines * g_indicator_height));
 		::OutputDebugString(s);
 
@@ -550,6 +546,33 @@ bool IndicatorPanel::fileModified(size_t linenum)
 				}
 			}
 		}
+		//if line got added
+		else if (m_totallines < totallines)
+		{
+			size_t changed = totallines - m_totallines;
+			std::set<size_t>::iterator& it = g_map_modified_linenum[m_current_bufferid].end();
+
+			it--;
+			if (it != g_map_modified_linenum[m_current_bufferid].begin())
+			{
+				size_t currlinenum = *it;
+				while (currlinenum >= linenum)
+				{
+					it--;
+					g_map_modified_linenum[m_current_bufferid].erase(currlinenum);
+					g_map_modified_linenum[m_current_bufferid].insert(currlinenum + changed);
+					g_map_modified_indicator[m_current_bufferid].insert((currlinenum + changed) * m_draw_height / totallines);
+
+					if (it == g_map_modified_linenum[m_current_bufferid].begin())
+						break;
+
+					currlinenum = *it;
+				}
+			}
+		}
+
+		g_map_modified_linenum[m_current_bufferid].insert(linenum);
+		g_map_modified_indicator[m_current_bufferid].insert(linenum * m_draw_height / (totallines * g_indicator_height));
 	}
 	else
 	{
