@@ -29,7 +29,8 @@ COLORREF g_color_search = RGB(212, 157, 6);
 long g_indicator_width  = 5;
 long g_indicator_height = 5;
 std::mutex g_mset_mutex;  // protects m_set_modified_linenum
-std::map<ULONG_PTR, std::set<size_t>> map_modified_linenum;
+std::map<ULONG_PTR, std::set<size_t>> g_map_modified_linenum;
+std::map<ULONG_PTR, std::set<size_t>> g_map_modified_indicator;
 
 IndicatorPanel::IndicatorPanel(SCIView* view ): m_IndicPixelsUp(this), m_IndicLinesUp(this)
 {
@@ -41,7 +42,8 @@ IndicatorPanel::IndicatorPanel(SCIView* view ): m_IndicPixelsUp(this), m_IndicLi
 	//m_set_modified_linenum.clear();
 	m_totallines = m_View->sci(SCI_GETLINECOUNT, 0, 0);
 	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
-	map_modified_linenum[m_current_bufferid].clear();
+	g_map_modified_linenum[m_current_bufferid].clear();
+	g_map_modified_indicator[m_current_bufferid].clear();
 	pixelIndicators = 0;
 
 	// let window calculate nc region again, to be able to draw panel first time
@@ -133,6 +135,9 @@ LRESULT IndicatorPanel::OnNCPaint(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 	}else{
 		res = FillRgn(hdc, prRG, hbr3DFace);
 	}
+
+	m_draw_height = m_PanelRect.bottom - m_PanelRect.top - ((int)vscroll + 2* (int)hscroll) * scrollHHeight;
+	m_topOffset = vscroll ? m_PanelRect.top + scrollHHeight : m_PanelRect.top;
 
 	m_linemodified = true;
 
@@ -294,6 +299,119 @@ void IndicatorPanel::GetIndicatorPixels(){
 	}
 }
 
+void IndicatorPanel::updateSelectedIndicator(HDC hdc)
+{
+	if (m_Indicators.size() > 0)
+	{
+		TCHAR desc[300] = { 0 };
+		TCHAR out[350] = { 0 };
+		int langid = 0;
+
+		::SendMessage(nppData._nppHandle, NPPM_GETCURRENTLANGTYPE, NULL, (LPARAM)&langid);
+		::SendMessage(nppData._nppHandle, NPPM_GETLANGUAGEDESC, langid, NULL);
+		::SendMessage(nppData._nppHandle, NPPM_GETLANGUAGEDESC, langid, (LPARAM)desc);
+
+		swprintf(out, 350, _T("%s    %d highlighted"), desc, m_Indicators.size());
+		::SendMessage(nppData._nppHandle, NPPM_SETSTATUSBAR, STATUSBAR_DOC_TYPE, (LPARAM)out);
+	}
+
+	COLORREF color = getColorForMask(1);
+	HBRUSH brush = CreateSolidBrush(color);
+	long curOffset = 0;
+
+	long x = m_PanelRect.left + 2;
+	long y = m_PanelRect.top;
+
+	int lineHeight = m_View->sci(SCI_TEXTHEIGHT, 0, 0);
+	int visuablelines = (m_PanelRect.bottom - m_PanelRect.top) / lineHeight;
+
+	if (m_totallines < visuablelines)
+		m_totallines = visuablelines;
+
+	//bool hscroll = hasStyle(m_View->m_Handle, WS_HSCROLL);
+	//m_draw_height = m_PanelRect.bottom - m_PanelRect.top - (2 + hscroll) * scrollHHeight;
+
+	DWORD mask = 1;
+	DWORD prev_mask = 1;
+	color = getColorForMask(mask);
+	brush = CreateSolidBrush(color);
+	RECT t;
+
+	for (auto it = m_Indicators.begin(); it != m_Indicators.end(); it++)
+	{
+		mask = it->mask;
+		if (mask)
+		{
+			if (mask != prev_mask)
+			{
+				color = getColorForMask(mask);
+				brush = CreateSolidBrush(color);
+			}
+
+			if (brush != NULL)
+			{
+				prev_mask = mask;
+				curOffset = (it->line) * m_draw_height / (long)(m_totallines)+m_topOffset;
+				if (curOffset < m_PanelRect.top)
+					curOffset = m_PanelRect.top;
+				if (curOffset > m_PanelRect.bottom)
+					curOffset = m_PanelRect.bottom;
+
+				long tx = m_PanelRect.left + g_indicator_width + 4;
+				t = { tx, curOffset, tx + g_indicator_width, curOffset + g_indicator_height };
+
+				FillRect(hdc, &t, brush);
+			}
+		}
+	}
+
+}
+
+void IndicatorPanel::updateChangedIndicator(HDC hdc)
+{
+	HBRUSH brush = CreateSolidBrush(g_color_change);
+
+	long x = m_PanelRect.left + 2;
+	long y = m_PanelRect.top;
+
+	RECT t;
+
+	if (m_linemodified)
+	{
+		//const std::lock_guard<std::mutex> lock(g_mset_mutex);
+		for (auto it = g_map_modified_linenum[m_current_bufferid].begin(); it != g_map_modified_linenum[m_current_bufferid].end(); it++)
+		{
+			y = (*it) * m_draw_height / (long)(m_totallines)+m_topOffset;
+
+			if (y < m_PanelRect.top)
+				y = m_PanelRect.top;
+			if (y > m_PanelRect.bottom)
+				y = m_PanelRect.bottom;
+
+			t = { x, y, x + g_indicator_width, y + g_indicator_height };
+			FillRect(hdc, &t, brush);
+		}
+		/*RECT t;
+		CString s;
+		for (auto it = g_map_modified_indicator[m_current_bufferid].begin(); it != g_map_modified_indicator[m_current_bufferid].end(); it++)
+		{
+			s.Format(_T("indicator num=%d\n"), *it);
+			::OutputDebugString(s);
+
+			y = (*it) * g_indicator_height + m_topOffset;
+
+			if (y < m_PanelRect.top)
+				y = m_PanelRect.top;
+			if (y > m_PanelRect.bottom)
+				y = m_PanelRect.bottom;
+
+			t = { x, y, x + g_indicator_width, y + g_indicator_height };
+			FillRect(hdc, &t, brush);
+		}*/
+
+		m_linemodified = false;
+	}
+}
 
 void IndicatorPanel::paintIndicators(){
 	HDC hdc = GetWindowDC(m_View->m_Handle);
@@ -308,110 +426,26 @@ void IndicatorPanel::paintIndicators(HDC hdc){
 	if ( m_Disabled)
 		return;
 
-	bool vscroll = hasStyle(m_View->m_Handle, WS_VSCROLL);
-	int scrollHHeight	= GetSystemMetrics(SM_CXHSCROLL);
-	HBRUSH hbr3DFace = (HBRUSH)GetSysColorBrush(COLOR_3DFACE); 
-
-	int topOffset = vscroll ? m_PanelRect.top + scrollHHeight : m_PanelRect.top;
-
-	BOOL res;
-
 	//we only clear the search results indicators, keep the change indicators
 	RECT t = m_PanelRect;
 	t.left += 20;
 
-	res = FillRect(hdc, &t, hbr3DFace);
+	HBRUSH hbr3DFace = (HBRUSH)GetSysColorBrush(COLOR_3DFACE);
+	FillRect(hdc, &t, hbr3DFace);
 
-	if (m_Indicators.size() > 0)
-	{
-		TCHAR desc[300] = { 0 };
-		TCHAR out[350] = { 0 };
-		int langid = 0;
+	updateSelectedIndicator(hdc);
 
-		::SendMessage(nppData._nppHandle, NPPM_GETCURRENTLANGTYPE, NULL, (LPARAM)&langid);
-		::SendMessage(nppData._nppHandle, NPPM_GETLANGUAGEDESC, langid, NULL);
-		::SendMessage(nppData._nppHandle, NPPM_GETLANGUAGEDESC, langid, (LPARAM)desc);
-	
-		swprintf(out, 350, _T("%s    %d highlighted"), desc, m_Indicators.size());
-		::SendMessage(nppData._nppHandle, NPPM_SETSTATUSBAR, STATUSBAR_DOC_TYPE, (LPARAM)out);
-	}
+	updateChangedIndicator(hdc);
 
-	COLORREF color = getColorForMask(1);
-	HBRUSH brush = CreateSolidBrush(color);
-	long curOffset = 0;
-
+	HBRUSH brush = CreateSolidBrush(g_color_current_line);
 
 	long x = m_PanelRect.left + 2;
 	long y = m_PanelRect.top;
 
-	int lineHeight = m_View->sci(SCI_TEXTHEIGHT, 0, 0);
-	int visuablelines = (m_PanelRect.bottom - m_PanelRect.top) / lineHeight;
-
-	if (m_totallines < visuablelines)
-		m_totallines = visuablelines;
-
-	bool hscroll = hasStyle(m_View->m_Handle, WS_HSCROLL);
-	int height = m_PanelRect.bottom - m_PanelRect.top - (2 + hscroll) * scrollHHeight;
-
-	DWORD mask = 1;
-	DWORD prev_mask = 1;
-	color = getColorForMask(mask);
-	brush = CreateSolidBrush(color);
-
-	for (auto it = m_Indicators.begin(); it != m_Indicators.end(); it++) 
-	{
-		mask = it->mask;
-		if (mask) 
-		{
-			if(mask != prev_mask)
-			{
-				color = getColorForMask(mask);
-				brush = CreateSolidBrush(color);
-			}
-			
-			if(brush != NULL)
-			{
-				prev_mask = mask;
-				curOffset = (it->line) * (height) / (long)(m_totallines)+topOffset;
-				if (curOffset < m_PanelRect.top)
-					curOffset = m_PanelRect.top;
-				if (curOffset > m_PanelRect.bottom)
-					curOffset = m_PanelRect.bottom;
-
-				long tx = m_PanelRect.left + g_indicator_width + 4;
-				t = { tx, curOffset, tx+g_indicator_width, curOffset + g_indicator_height };
-
-				FillRect(hdc, &t, brush);
-			}
-		}
-	}
-
-	if(m_linemodified)
-	{
-		brush = CreateSolidBrush(g_color_change);
-
-		const std::lock_guard<std::mutex> lock(g_mset_mutex);
-		for (auto it = map_modified_linenum[m_current_bufferid].begin(); it != map_modified_linenum[m_current_bufferid].end(); it++)
-		{
-			y = (*it) * (height) / (long)(m_totallines)+topOffset;
-
-			if (y < m_PanelRect.top)
-				y = m_PanelRect.top;
-			if (y > m_PanelRect.bottom)
-				y = m_PanelRect.bottom;
-
-			t = { x, y, x + g_indicator_width, y + g_indicator_height };
-			FillRect(hdc, &t, brush);
-		}
-
-		m_linemodified = false;
-	}
-
 	size_t linenum = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTLINE, 0, 0);
 
-	y = linenum * height / (long)m_totallines + topOffset;
+	y = linenum * m_draw_height / (long)m_totallines + m_topOffset;
 
-	brush = CreateSolidBrush(g_color_current_line);
 	t = { x, y, x + 14, y + 2 };
 	FillRect(hdc, &t, brush);
 
@@ -479,34 +513,48 @@ bool IndicatorPanel::fileModified(size_t linenum)
 
 	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
 
-	auto it = map_modified_linenum.find(m_current_bufferid);
-	if(it != map_modified_linenum.end())
+	CString s;
+	s.Format(_T("file modified, linenum=%d, totalline=%d, m_draw_height=%d\n"), linenum, totallines, m_draw_height);
+	::OutputDebugString(s);
+
+	auto it = g_map_modified_linenum.find(m_current_bufferid);
+	if(it != g_map_modified_linenum.end())
 	{
-		const std::lock_guard<std::mutex> lock(g_mset_mutex);
-		map_modified_linenum[m_current_bufferid].insert(linenum);
+		//const std::lock_guard<std::mutex> lock(g_mset_mutex);
+		g_map_modified_linenum[m_current_bufferid].insert(linenum);
+		g_map_modified_indicator[m_current_bufferid].insert(linenum*m_draw_height/(totallines*g_indicator_height));
+
+		s.Format(_T("file modified, indicator num=%d\n"), linenum * m_draw_height / (totallines * g_indicator_height));
+		::OutputDebugString(s);
 
 		//if line got deleted, need to update the line number in m_map_modified_linenum 
 		if (m_totallines > totallines)
 		{
 			int changednum = m_totallines - totallines;
-			std::set<size_t>::iterator& it = map_modified_linenum[m_current_bufferid].end();
-			it--;
-			while(*it > linenum)
-			{
-				map_modified_linenum[m_current_bufferid].erase(it);
-				map_modified_linenum[m_current_bufferid].insert((*it) - changednum);
-				
-				it = map_modified_linenum[m_current_bufferid].end();
+			std::set<size_t>::iterator& it = std::lower_bound(g_map_modified_linenum[m_current_bufferid].begin(), g_map_modified_linenum[m_current_bufferid].end(), linenum+1);
 
-				if (it == map_modified_linenum[m_current_bufferid].begin())
-					break;
-				
+			if(it != g_map_modified_linenum[m_current_bufferid].end())
+			{
+				size_t currlinenum = *it;
+				while (currlinenum > linenum)
+				{
+					it++;
+					g_map_modified_linenum[m_current_bufferid].erase(currlinenum);
+					g_map_modified_linenum[m_current_bufferid].insert(currlinenum - changednum);
+					g_map_modified_indicator[m_current_bufferid].insert((currlinenum - changednum) * m_draw_height / totallines);
+
+					if (it == g_map_modified_linenum[m_current_bufferid].end())
+						break;
+
+					currlinenum = *it;
+				}
 			}
 		}
 	}
 	else
 	{
-		map_modified_linenum[m_current_bufferid].clear();
+		g_map_modified_linenum[m_current_bufferid].clear();
+		g_map_modified_indicator[m_current_bufferid].clear();
 	}
 
 	m_totallines = totallines;

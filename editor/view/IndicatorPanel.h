@@ -50,6 +50,9 @@ class IndicatorPanel
 	//std::set<size_t> m_set_modified_linenum;
 	ULONG_PTR      m_current_bufferid;
 	size_t         m_current_linenum = 0;
+
+	long           m_draw_height = 0;
+	long           m_topOffset = 0;
 public:
 	DWORD* pixelIndicators;
 	int  m_PixelIndicatorsLen;
@@ -69,6 +72,8 @@ public:
 	bool fileModified(size_t linenum);
 	bool fileDoubleClicked();
 	bool fileSingleClicked();
+	void updateSelectedIndicator(HDC hdc);
+	void updateChangedIndicator(HDC hdc);
 
 	static bool hasStyle(HWND hwnd, int style);
 
