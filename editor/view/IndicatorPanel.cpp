@@ -505,11 +505,12 @@ void  IndicatorPanel::SetIndicatorMask(DWORD value){
 	paintIndicators();
 }
 
-bool IndicatorPanel::fileModified(size_t linenum)
+bool IndicatorPanel::fileModified(int pos)
 {
 	::OutputDebugString(_T("fileModified"));
 
 	size_t totallines = m_View->sci(SCI_GETLINECOUNT, 0, 0);
+	int linenum = m_View->sci(SCI_LINEFROMPOSITION, pos, 0);
 
 	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
 

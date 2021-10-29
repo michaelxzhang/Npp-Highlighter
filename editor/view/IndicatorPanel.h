@@ -69,7 +69,7 @@ public:
 	
 	COLORREF getColorForMask(DWORD mask);
 
-	bool fileModified(size_t linenum);
+	bool fileModified(int pos);
 	bool fileDoubleClicked();
 	bool fileSingleClicked();
 	void updateSelectedIndicator(HDC hdc);
