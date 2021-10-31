@@ -312,7 +312,7 @@ void IndicatorPanel::updateSelectedIndicator(HDC hdc)
 		::SendMessage(nppData._nppHandle, NPPM_GETLANGUAGEDESC, langid, NULL);
 		::SendMessage(nppData._nppHandle, NPPM_GETLANGUAGEDESC, langid, (LPARAM)desc);
 
-		swprintf(out, 350, _T("%s    %d highlighted"), desc, m_Indicators.size());
+		swprintf(out, 350, _T("%s    %d lines highlighted"), desc, m_Indicators.size());
 		::SendMessage(nppData._nppHandle, NPPM_SETSTATUSBAR, STATUSBAR_DOC_TYPE, (LPARAM)out);
 	}
 
