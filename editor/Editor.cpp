@@ -231,6 +231,15 @@ void CEditor::doOnFileModified(int pos)
 	}
 }
 
+void CEditor::doOnFileLinesAddedDeleted(int pos, int lines_deleted)
+{
+	// provide messages to current view
+	int view = GetCurrentView(); // can be -1 what is not valid
+	if (view >= 0 && view < m_ViewsNumber) {
+		m_Views[view]->m_IndPanel.fileLinesAddedDeleted(pos, lines_deleted);
+	}
+}
+
 void CEditor::doOnClick()
 {
 	// provide messages to current view

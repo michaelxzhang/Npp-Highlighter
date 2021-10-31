@@ -46,7 +46,8 @@ class IndicatorPanel
 
 
 	bool           m_linemodified = false;
-	size_t         m_totallines = 0;
+	size_t         m_totallines = 0;           //real total lines
+	size_t         m_virtual_totallines = 0;   //total visual lines, used for calculate if the real line number less than the line number the current view could hold
 	//std::set<size_t> m_set_modified_linenum;
 	ULONG_PTR      m_current_bufferid;
 	size_t         m_current_linenum = 0;
@@ -70,6 +71,7 @@ public:
 	COLORREF getColorForMask(DWORD mask);
 
 	bool fileModified(int pos);
+	bool fileLinesAddedDeleted(int pos, int lines_added);
 	bool fileDoubleClicked();
 	bool fileSingleClicked();
 	void updateSelectedIndicator(HDC hdc);
