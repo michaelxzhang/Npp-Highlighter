@@ -536,23 +536,23 @@ bool IndicatorPanel::fileModified(int pos)
 		if (m_totallines > totallines)
 		{
 			int changednum = m_totallines - totallines;
-			std::set<int>::iterator& it = std::lower_bound(g_map_modified_linenum[m_current_bufferid].begin(), g_map_modified_linenum[m_current_bufferid].end(), linenum+1);
+			std::set<int>::iterator& it_linenum = std::lower_bound(g_map_modified_linenum[m_current_bufferid].begin(), g_map_modified_linenum[m_current_bufferid].end(), linenum+1);
 
-			if(it != g_map_modified_linenum[m_current_bufferid].end())
+			if(it_linenum != g_map_modified_linenum[m_current_bufferid].end())
 			{
 				::OutputDebugString(_T("line deleted\n"));
-				size_t currlinenum = *it;
+				size_t currlinenum = *it_linenum;
 				while (currlinenum > linenum)
 				{
-					it++;
+					it_linenum++;
 					g_map_modified_linenum[m_current_bufferid].erase(currlinenum);
 					g_map_modified_linenum[m_current_bufferid].insert(currlinenum - changednum);
 					g_map_modified_indicator[m_current_bufferid].insert((currlinenum - changednum) * m_draw_height / totallines);
 
-					if (it == g_map_modified_linenum[m_current_bufferid].end())
+					if (it_linenum == g_map_modified_linenum[m_current_bufferid].end())
 						break;
 
-					currlinenum = *it;
+					currlinenum = *it_linenum;
 				}
 			}
 		}
@@ -561,23 +561,23 @@ bool IndicatorPanel::fileModified(int pos)
 		{
 			::OutputDebugString(_T("line added\n"));
 			size_t changed = totallines - m_totallines;
-			std::set<int>::iterator& it = g_map_modified_linenum[m_current_bufferid].end();
+			std::set<int>::iterator& it_linenum = g_map_modified_linenum[m_current_bufferid].end();
 
-			it--;
-			if (it != g_map_modified_linenum[m_current_bufferid].begin())
+			it_linenum--;
+			if (it_linenum != g_map_modified_linenum[m_current_bufferid].begin())
 			{
-				size_t currlinenum = *it;
+				size_t currlinenum = *it_linenum;
 				while (currlinenum >= linenum)
 				{
-					it--;
+					it_linenum--;
 					g_map_modified_linenum[m_current_bufferid].erase(currlinenum);
 					g_map_modified_linenum[m_current_bufferid].insert(currlinenum + changed);
 					g_map_modified_indicator[m_current_bufferid].insert((currlinenum + changed) * m_draw_height / totallines);
 
-					if (it == g_map_modified_linenum[m_current_bufferid].begin())
+					if (it_linenum == g_map_modified_linenum[m_current_bufferid].begin())
 						break;
 
-					currlinenum = *it;
+					currlinenum = *it_linenum;
 				}
 			}
 		}
@@ -589,6 +589,70 @@ bool IndicatorPanel::fileModified(int pos)
 	{
 		g_map_modified_linenum[m_current_bufferid].clear();
 		g_map_modified_indicator[m_current_bufferid].clear();
+	}
+
+	m_totallines = totallines;
+	m_linemodified = true;
+
+	paintIndicators();
+
+	return true;
+}
+
+bool IndicatorPanel::fileLinesAddedDeleted(int pos, int lines_added)
+{
+	::OutputDebugString(_T("fileLinesDeleted\n"));
+
+	size_t totallines = m_View->sci(SCI_GETLINECOUNT, 0, 0);
+	int linenum = m_View->sci(SCI_LINEFROMPOSITION, pos, 0);
+
+	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+
+	bool bLinesDeleted = false;
+	if(lines_added < 0)
+		bLinesDeleted = true;
+
+	auto it = g_map_modified_linenum.find(m_current_bufferid);
+	if (it != g_map_modified_linenum.end())
+	{
+		while (1)
+		{
+			if (bLinesDeleted)
+			{
+				std::set<int>::iterator& it_linenum = g_map_modified_linenum[m_current_bufferid].find(linenum);
+				if (it_linenum != g_map_modified_linenum[m_current_bufferid].end())
+				{
+					g_map_modified_linenum[m_current_bufferid].erase(it_linenum);
+
+					//whne lines_added to 0, this should be the last line number to proceed
+					if (lines_added == 0)
+						break;
+
+					lines_added++;
+					
+					linenum++;
+				}
+				else
+					break;
+			}
+			else
+			{
+				g_map_modified_linenum[m_current_bufferid].insert(linenum);
+
+				//whne lines_added to 0, this should be the last line number to proceed
+				if (lines_added == 0)
+					break;
+
+				lines_added--;
+
+				linenum++;
+			}
+		}
+
+		if (lines_added < 0)
+		{
+			g_map_modified_linenum[m_current_bufferid].insert(linenum);
+		}
 	}
 
 	m_totallines = totallines;

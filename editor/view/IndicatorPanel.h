@@ -71,6 +71,7 @@ public:
 	COLORREF getColorForMask(DWORD mask);
 
 	bool fileModified(int pos);
+	bool fileLinesAddedDeleted(int pos, int lines_added);
 	bool fileDoubleClicked();
 	bool fileSingleClicked();
 	void updateSelectedIndicator(HDC hdc);
