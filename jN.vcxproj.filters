@@ -223,6 +223,7 @@
     <ClInclude Include="common\Dialog\WindowClass.h">
       <Filter>Common\Dialog</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="editor\editor.idl">
@@ -242,5 +243,8 @@
     <CustomBuild Include="VersionInfo_tmpl.h">
       <Filter>Misc</Filter>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="project.tlb" />
   </ItemGroup>
 </Project>
