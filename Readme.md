@@ -1,6 +1,6 @@
-# Highlighter Plugin (Notepad++)
+# Npp-Highlighter Plugin (Notepad++)
 
-Highlighter allows you to highlight the changed part and double click selected text in Notepad++.
+Npp-Highlighter allows you to highlight the changed part and double click selected text in Notepad++.
 
 Many thanks to Sieukrem, this plugin is based on his plugin - jN, from here
 [https://github.com/sieukrem/jn-npp-plugin](https://github.com/sieukrem/jn-npp-plugin)
