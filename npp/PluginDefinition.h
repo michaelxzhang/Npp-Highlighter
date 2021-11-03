@@ -28,7 +28,7 @@
 //-------------------------------------//
 // Here define your plugin name
 //
-const TCHAR NPP_PLUGIN_NAME[] = TEXT("Highlighter");
+const TCHAR NPP_PLUGIN_NAME[] = TEXT("Npp-Highlighter");
 
 //-----------------------------------------------//
 //-- STEP 2. DEFINE YOUR PLUGIN COMMAND NUMBER --//

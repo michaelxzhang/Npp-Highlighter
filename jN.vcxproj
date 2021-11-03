@@ -23,7 +23,7 @@
     <RootNamespace>NppPluginTemplate</RootNamespace>
     <Keyword>Win32Proj</Keyword>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>Highlighter</ProjectName>
+    <ProjectName>Npp-Highlighter</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
@@ -297,6 +297,7 @@
     <ClInclude Include="npp\PluginDefinition.h" />
     <ClInclude Include="npp\PluginInterface.h" />
     <ClInclude Include="npp\Scintilla.h" />
+    <ClInclude Include="resource.h" />
     <CustomBuild Include="VersionInfo.h">
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">VersionInfo_tmpl.h;%(AdditionalInputs)</AdditionalInputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VersionInfo_tmpl.h;%(AdditionalInputs)</AdditionalInputs>
@@ -335,6 +336,9 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="GPL_and_Commercial.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="project.tlb" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
