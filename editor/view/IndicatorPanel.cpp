@@ -527,6 +527,12 @@ bool IndicatorPanel::fileModified(int pos)
 	::OutputDebugString(s);
 
 	auto it = g_map_modified_linenum.find(m_current_bufferid);
+	if (it == g_map_modified_linenum.end())
+	{
+		g_map_modified_indicator[m_current_bufferid].clear();
+	}
+
+	it = g_map_modified_linenum.find(m_current_bufferid);
 	if(it != g_map_modified_linenum.end())
 	{
 		s.Format(_T("file modified, indicator num=%d\n"), linenum * m_draw_height / (totallines * g_indicator_height));
