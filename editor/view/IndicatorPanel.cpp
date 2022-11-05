@@ -578,6 +578,7 @@ bool IndicatorPanel::fileModified(int pos)
 					it_linenum--;
 					g_map_modified_linenum[m_current_bufferid].erase(currlinenum);
 					g_map_modified_linenum[m_current_bufferid].insert(currlinenum + changed);
+					g_map_modified_indicator[m_current_bufferid].erase(currlinenum * m_draw_height / totallines);
 					g_map_modified_indicator[m_current_bufferid].insert((currlinenum + changed) * m_draw_height / totallines);
 
 					if (it_linenum == g_map_modified_linenum[m_current_bufferid].begin())
@@ -588,8 +589,8 @@ bool IndicatorPanel::fileModified(int pos)
 			}
 		}
 
-		g_map_modified_linenum[m_current_bufferid].insert(linenum);
-		g_map_modified_indicator[m_current_bufferid].insert(linenum * m_draw_height / (totallines * g_indicator_height));
+		//g_map_modified_linenum[m_current_bufferid].insert(linenum);
+		//g_map_modified_indicator[m_current_bufferid].insert(linenum * m_draw_height / (totallines * g_indicator_height));
 	}
 	else
 	{
@@ -607,7 +608,7 @@ bool IndicatorPanel::fileModified(int pos)
 
 bool IndicatorPanel::fileLinesAddedDeleted(int pos, int lines_added)
 {
-	::OutputDebugString(_T("fileLinesDeleted\n"));
+	::OutputDebugString(_T("fileLinesAddedDeleted\n"));
 
 	size_t totallines = m_View->sci(SCI_GETLINECOUNT, 0, 0);
 	int linenum = m_View->sci(SCI_LINEFROMPOSITION, pos, 0);
@@ -619,9 +620,16 @@ bool IndicatorPanel::fileLinesAddedDeleted(int pos, int lines_added)
 		bLinesDeleted = true;
 
 	auto it = g_map_modified_linenum.find(m_current_bufferid);
+	if (it == g_map_modified_linenum.end())
+	{
+		g_map_modified_indicator[m_current_bufferid].clear();
+	}
+
+	it = g_map_modified_linenum.find(m_current_bufferid);
+
 	if (it != g_map_modified_linenum.end())
 	{
-		while (1)
+		while (lines_added != 0)
 		{
 			if (bLinesDeleted)
 			{
@@ -644,6 +652,28 @@ bool IndicatorPanel::fileLinesAddedDeleted(int pos, int lines_added)
 			else
 			{
 				g_map_modified_linenum[m_current_bufferid].insert(linenum);
+
+				int changed = totallines - m_totallines;
+				std::set<int>::iterator& it_linenum = g_map_modified_linenum[m_current_bufferid].end();
+
+				it_linenum--;
+				if (it_linenum != g_map_modified_linenum[m_current_bufferid].begin())
+				{
+					size_t currlinenum = *it_linenum;
+					while (currlinenum > linenum)
+					{
+						it_linenum--;
+						g_map_modified_linenum[m_current_bufferid].erase(currlinenum);
+						g_map_modified_linenum[m_current_bufferid].insert(currlinenum + changed);
+						g_map_modified_indicator[m_current_bufferid].erase(currlinenum * m_draw_height / totallines);
+						g_map_modified_indicator[m_current_bufferid].insert((currlinenum + changed) * m_draw_height / totallines);
+
+						if (it_linenum == g_map_modified_linenum[m_current_bufferid].begin())
+							break;
+
+						currlinenum = *it_linenum;
+					}
+				}
 
 				//whne lines_added to 0, this should be the last line number to proceed
 				if (lines_added == 0)
