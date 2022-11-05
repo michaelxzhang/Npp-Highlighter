@@ -14,7 +14,6 @@ Highlighter disabled the javascript functions from jN, only use the bar to displ
 - Indicate the current line position on the right side bar
 
 ## To-dos
-- At the begining of each line, put a mark if line content changed
 - Improve the performance when dealing with huge files
 - Allow user change the color?
 
