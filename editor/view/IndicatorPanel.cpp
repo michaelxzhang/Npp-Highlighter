@@ -388,8 +388,8 @@ void IndicatorPanel::updateChangedIndicator(HDC hdc)
 		{
 			y = (*it) * m_draw_height / (long)(m_virtual_totallines)+m_topOffset;
 
-			s.Format(_T("upddate changed, *it=%d, y=%d\n"), *it, y);
-			::OutputDebugString(s);
+			//s.Format(_T("upddate changed, *it=%d, y=%d\n"), *it, y);
+			//::OutputDebugString(s);
 
 			if (y < m_PanelRect.top)
 				y = m_PanelRect.top;
@@ -399,23 +399,6 @@ void IndicatorPanel::updateChangedIndicator(HDC hdc)
 			t = { x, y, x + g_indicator_width, y + g_indicator_height };
 			FillRect(hdc, &t, brush);
 		}
-		/*RECT t;
-		CString s;
-		for (auto it = g_map_modified_indicator[m_current_bufferid].begin(); it != g_map_modified_indicator[m_current_bufferid].end(); it++)
-		{
-			s.Format(_T("indicator num=%d\n"), *it);
-			::OutputDebugString(s);
-
-			y = (*it) * g_indicator_height + m_topOffset;
-
-			if (y < m_PanelRect.top)
-				y = m_PanelRect.top;
-			if (y > m_PanelRect.bottom)
-				y = m_PanelRect.bottom;
-
-			t = { x, y, x + g_indicator_width, y + g_indicator_height };
-			FillRect(hdc, &t, brush);
-		}*/
 
 		m_linemodified = false;
 	}
@@ -515,16 +498,16 @@ void  IndicatorPanel::SetIndicatorMask(DWORD value){
 
 bool IndicatorPanel::fileModified(int pos)
 {
-	::OutputDebugString(_T("fileModified"));
+	//::OutputDebugString(_T("fileModified"));
 
 	size_t totallines = m_View->sci(SCI_GETLINECOUNT, 0, 0);
 	int linenum = m_View->sci(SCI_LINEFROMPOSITION, pos, 0);
 
 	m_current_bufferid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
 
-	CString s;
-	s.Format(_T("file modified, linenum=%d, totalline=%d, m_totallines=%d, m_draw_height=%d\n"), linenum, totallines, m_totallines, m_draw_height);
-	::OutputDebugString(s);
+	//CString s;
+	//s.Format(_T("file modified, linenum=%d, totalline=%d, m_totallines=%d, m_draw_height=%d\n"), linenum, totallines, m_totallines, m_draw_height);
+	//::OutputDebugString(s);
 
 	auto it = g_map_modified_linenum.find(m_current_bufferid);
 	if (it == g_map_modified_linenum.end())
@@ -535,8 +518,8 @@ bool IndicatorPanel::fileModified(int pos)
 	it = g_map_modified_linenum.find(m_current_bufferid);
 	if(it != g_map_modified_linenum.end())
 	{
-		s.Format(_T("file modified, indicator num=%d\n"), linenum * m_draw_height / (totallines * g_indicator_height));
-		::OutputDebugString(s);
+		//s.Format(_T("file modified, indicator num=%d\n"), linenum * m_draw_height / (totallines * g_indicator_height));
+		//::OutputDebugString(s);
 
 		//if line got deleted, need to update the line number in m_map_modified_linenum 
 		if (m_totallines > totallines)
@@ -546,13 +529,14 @@ bool IndicatorPanel::fileModified(int pos)
 
 			if(it_linenum != g_map_modified_linenum[m_current_bufferid].end())
 			{
-				::OutputDebugString(_T("line deleted\n"));
+				//::OutputDebugString(_T("line deleted\n"));
 				size_t currlinenum = *it_linenum;
 				while (currlinenum > linenum)
 				{
 					it_linenum++;
 					g_map_modified_linenum[m_current_bufferid].erase(currlinenum);
 					g_map_modified_linenum[m_current_bufferid].insert(currlinenum - changednum);
+					g_map_modified_indicator[m_current_bufferid].insert((currlinenum) * m_draw_height / totallines);
 					g_map_modified_indicator[m_current_bufferid].insert((currlinenum - changednum) * m_draw_height / totallines);
 
 					if (it_linenum == g_map_modified_linenum[m_current_bufferid].end())
@@ -565,7 +549,7 @@ bool IndicatorPanel::fileModified(int pos)
 		//if line got added
 		else if (m_totallines < totallines)
 		{
-			::OutputDebugString(_T("line added\n"));
+			//::OutputDebugString(_T("line added\n"));
 			size_t changed = totallines - m_totallines;
 			std::set<int>::iterator& it_linenum = g_map_modified_linenum[m_current_bufferid].end();
 
@@ -573,7 +557,7 @@ bool IndicatorPanel::fileModified(int pos)
 			if (it_linenum != g_map_modified_linenum[m_current_bufferid].begin())
 			{
 				size_t currlinenum = *it_linenum;
-				while (currlinenum >= linenum)
+				while (currlinenum > linenum)
 				{
 					it_linenum--;
 					g_map_modified_linenum[m_current_bufferid].erase(currlinenum);
@@ -608,7 +592,7 @@ bool IndicatorPanel::fileModified(int pos)
 
 bool IndicatorPanel::fileLinesAddedDeleted(int pos, int lines_added)
 {
-	::OutputDebugString(_T("fileLinesAddedDeleted\n"));
+	//::OutputDebugString(_T("fileLinesAddedDeleted\n"));
 
 	size_t totallines = m_View->sci(SCI_GETLINECOUNT, 0, 0);
 	int linenum = m_View->sci(SCI_LINEFROMPOSITION, pos, 0);
@@ -637,17 +621,39 @@ bool IndicatorPanel::fileLinesAddedDeleted(int pos, int lines_added)
 				if (it_linenum != g_map_modified_linenum[m_current_bufferid].end())
 				{
 					g_map_modified_linenum[m_current_bufferid].erase(it_linenum);
-
-					//whne lines_added to 0, this should be the last line number to proceed
-					if (lines_added == 0)
-						break;
-
-					lines_added++;
-					
-					linenum++;
 				}
 				else
 					break;
+
+				int changed =  m_totallines - totallines;
+				it_linenum = g_map_modified_linenum[m_current_bufferid].begin();
+
+				//it_linenum++;
+				if (it_linenum != g_map_modified_linenum[m_current_bufferid].end())
+				{
+					size_t currlinenum = *it_linenum;
+					while (currlinenum > linenum)
+					{
+						it_linenum++;
+						g_map_modified_linenum[m_current_bufferid].erase(currlinenum);
+						g_map_modified_linenum[m_current_bufferid].insert(currlinenum - changed);
+						g_map_modified_indicator[m_current_bufferid].erase(currlinenum * m_draw_height / totallines);
+						g_map_modified_indicator[m_current_bufferid].insert((currlinenum - changed) * m_draw_height / totallines);
+
+						if (it_linenum == g_map_modified_linenum[m_current_bufferid].end())
+							break;
+
+						currlinenum = *it_linenum;
+					}
+				}
+
+				//whne lines_added to 0, this should be the last line number to proceed
+				if (lines_added == 0)
+					break;
+
+				lines_added++;
+
+				linenum++;
 			}
 			else
 			{
