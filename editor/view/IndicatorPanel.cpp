@@ -137,7 +137,7 @@ LRESULT IndicatorPanel::OnNCPaint(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 		res = FillRgn(hdc, prRG, hbr3DFace);
 	}
 
-	m_draw_height = m_PanelRect.bottom - m_PanelRect.top - ((int)vscroll + 2* (int)hscroll) * scrollHHeight;
+	m_draw_height = m_PanelRect.bottom - m_PanelRect.top - (2*(int)vscroll + (int)hscroll) * scrollHHeight;
 	m_topOffset = vscroll ? m_PanelRect.top + scrollHHeight : m_PanelRect.top;
 
 	m_linemodified = true;
