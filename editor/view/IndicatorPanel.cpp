@@ -536,7 +536,7 @@ bool IndicatorPanel::fileModified(int pos)
 					it_linenum++;
 					g_map_modified_linenum[m_current_bufferid].erase(currlinenum);
 					g_map_modified_linenum[m_current_bufferid].insert(currlinenum - changednum);
-					g_map_modified_indicator[m_current_bufferid].insert((currlinenum) * m_draw_height / totallines);
+					g_map_modified_indicator[m_current_bufferid].erase((currlinenum) * m_draw_height / totallines);
 					g_map_modified_indicator[m_current_bufferid].insert((currlinenum - changednum) * m_draw_height / totallines);
 
 					if (it_linenum == g_map_modified_linenum[m_current_bufferid].end())
@@ -572,9 +572,11 @@ bool IndicatorPanel::fileModified(int pos)
 				}
 			}
 		}
-
-		//g_map_modified_linenum[m_current_bufferid].insert(linenum);
-		//g_map_modified_indicator[m_current_bufferid].insert(linenum * m_draw_height / (totallines * g_indicator_height));
+		else
+		{
+			g_map_modified_linenum[m_current_bufferid].insert(linenum);
+			g_map_modified_indicator[m_current_bufferid].insert(linenum * m_draw_height / (totallines * g_indicator_height));
+		}
 	}
 	else
 	{
@@ -621,6 +623,8 @@ bool IndicatorPanel::fileLinesAddedDeleted(int pos, int lines_added)
 				if (it_linenum != g_map_modified_linenum[m_current_bufferid].end())
 				{
 					g_map_modified_linenum[m_current_bufferid].erase(it_linenum);
+					size_t currlinenum = *it_linenum;
+					g_map_modified_indicator[m_current_bufferid].erase(currlinenum *m_draw_height / totallines);
 				}
 				else
 					break;
@@ -658,6 +662,7 @@ bool IndicatorPanel::fileLinesAddedDeleted(int pos, int lines_added)
 			else
 			{
 				g_map_modified_linenum[m_current_bufferid].insert(linenum);
+				g_map_modified_indicator[m_current_bufferid].insert((linenum)*m_draw_height / totallines);
 
 				int changed = totallines - m_totallines;
 				std::set<int>::iterator& it_linenum = g_map_modified_linenum[m_current_bufferid].end();
@@ -694,6 +699,7 @@ bool IndicatorPanel::fileLinesAddedDeleted(int pos, int lines_added)
 		if (lines_added < 0)
 		{
 			g_map_modified_linenum[m_current_bufferid].insert(linenum);
+			g_map_modified_indicator[m_current_bufferid].insert((linenum)*m_draw_height / totallines);
 		}
 	}
 
