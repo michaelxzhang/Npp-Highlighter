@@ -1,6 +1,9 @@
 # Npp-Highlighter Plugin (Notepad++)
 
-Npp-Highlighter allows you to highlight the changed part and double click selected text in Notepad++.
+Npp-Highlighter draw indicator on scroll bar when:
+- line contents changed
+- double clicked and smart highlighted words
+- text highlighted by Style token
 
 Many thanks to Sieukrem, this plugin is based on his plugin - jN, from here
 [https://github.com/sieukrem/jn-npp-plugin](https://github.com/sieukrem/jn-npp-plugin)
@@ -17,6 +20,6 @@ Highlighter disabled the javascript functions from jN, only use the bar to displ
 - Improve the performance when dealing with huge files
 - Allow user change the color?
 
-## Install
-- For 32-bit, download the Npp-Highlighter.dll under Release\Win32 folder, navigage to your Notepad++ plugin folder(C:\Program Files (x86)\Notepad++\plugins\), create folder Npp-Highlighter, put the Npp-Highlighter.dll under it. Restart Notepad++
-- For 64-bit, download the Npp-Highlighter.dll under Release\x64 folder, navigage to your Notepad++ plugin folder(C:\Program Files\Notepad++\plugins\), create folder Npp-Highlighter, put the Npp-Highlighter.dll under it. Restart Notepad++
+## Mannual Install
+- For 32-bit, download the **Npp-Highlighter.dll** under **Release\Win32** folder, navigage to your Notepad++ plugin folder(C:\Program Files (x86)\Notepad++\plugins\), create folder Npp-Highlighter, put the Npp-Highlighter.dll under it. Restart Notepad++
+- For 64-bit, download the **Npp-Highlighter.dll** under **Release\x64** folder, navigage to your Notepad++ plugin folder(C:\Program Files\Notepad++\plugins\), create folder Npp-Highlighter, put the Npp-Highlighter.dll under it. Restart Notepad++
