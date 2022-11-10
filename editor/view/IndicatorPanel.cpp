@@ -105,8 +105,8 @@ LRESULT IndicatorPanel::OnNCPaint(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 		return m_View->CallOldWndProc(message,wParam,lParam);
 
 	int borderWidth		= GetSystemMetrics(SM_CXFOCUSBORDER);
-	int scrollWidth		= GetSystemMetrics(SM_CXVSCROLL);
-	int scrollHHeight	= GetSystemMetrics(SM_CXHSCROLL);
+	int hscrollHeight		= GetSystemMetrics(SM_CYHSCROLL);
+	int vscrollArrowHeight	= GetSystemMetrics(SM_CYVSCROLL);
 
 	HDC hdc;
 	HBRUSH hbr3DFace; 
@@ -137,8 +137,8 @@ LRESULT IndicatorPanel::OnNCPaint(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 		res = FillRgn(hdc, prRG, hbr3DFace);
 	}
 
-	m_draw_height = m_PanelRect.bottom - m_PanelRect.top - (2*(int)vscroll + (int)hscroll) * scrollHHeight;
-	m_topOffset = vscroll ? m_PanelRect.top + scrollHHeight : m_PanelRect.top;
+	m_draw_height = m_PanelRect.bottom - m_PanelRect.top - (2*(int)vscroll * vscrollArrowHeight) - ((int)hscroll * hscrollHeight);
+	m_topOffset = vscroll ? m_PanelRect.top + vscrollArrowHeight : m_PanelRect.top;
 
 	m_linemodified = true;
 
