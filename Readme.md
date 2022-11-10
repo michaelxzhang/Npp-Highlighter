@@ -20,6 +20,6 @@ Highlighter disabled the javascript functions from jN, only use the bar to displ
 - Improve the performance when dealing with huge files
 - Allow user change the color?
 
-## Mannual Install
+## Manual Install
 - For 32-bit, download the **Npp-Highlighter.dll** under **Release\Win32** folder, navigage to your Notepad++ plugin folder(C:\Program Files (x86)\Notepad++\plugins\), create folder Npp-Highlighter, put the Npp-Highlighter.dll under it. Restart Notepad++
 - For 64-bit, download the **Npp-Highlighter.dll** under **Release\x64** folder, navigage to your Notepad++ plugin folder(C:\Program Files\Notepad++\plugins\), create folder Npp-Highlighter, put the Npp-Highlighter.dll under it. Restart Notepad++
