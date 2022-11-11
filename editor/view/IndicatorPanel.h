@@ -74,6 +74,7 @@ public:
 	bool fileLinesAddedDeleted(int pos, int lines_added);
 	bool fileDoubleClicked();
 	bool fileSingleClicked();
+	bool fileclose();
 	void updateSelectedIndicator(HDC hdc);
 	void updateChangedIndicator(HDC hdc);
 

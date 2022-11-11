@@ -751,3 +751,9 @@ bool IndicatorPanel::fileSingleClicked()
 
 	return true;
 }
+
+bool IndicatorPanel::fileclose()
+{
+	g_map_modified_linenum.erase(m_current_bufferid);
+	return true;
+}
