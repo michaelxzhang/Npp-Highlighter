@@ -125,6 +125,9 @@ void CEditorView::DoMessage(SCNotification* eventArgs){
 			// update all lines
 			setIndicatorLinesUpdater(-1,-1);
 			break;
+		case NPPN_FILEBEFORECLOSE:
+			m_IndPanel.fileclose();
+			break;
 		case SCN_ZOOM:{
 			// update only pixels
 			ForegroundIdleHook::getInstance()->add(&m_IndPanel.m_IndicPixelsUp);

@@ -58,6 +58,9 @@ IndicatorPanel::~IndicatorPanel(void)
 
 	if (pixelIndicators)
 		delete[] pixelIndicators;
+
+	g_map_modified_linenum.clear();
+	g_map_modified_indicator.clear();
 }
 
 void IndicatorPanel::RedrawIndicatorPanel(){
@@ -105,8 +108,8 @@ LRESULT IndicatorPanel::OnNCPaint(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 		return m_View->CallOldWndProc(message,wParam,lParam);
 
 	int borderWidth		= GetSystemMetrics(SM_CXFOCUSBORDER);
-	int scrollWidth		= GetSystemMetrics(SM_CXVSCROLL);
-	int scrollHHeight	= GetSystemMetrics(SM_CXHSCROLL);
+	int hscrollHeight		= GetSystemMetrics(SM_CYHSCROLL);
+	int vscrollArrowHeight	= GetSystemMetrics(SM_CYVSCROLL);
 
 	HDC hdc;
 	HBRUSH hbr3DFace; 
@@ -137,8 +140,8 @@ LRESULT IndicatorPanel::OnNCPaint(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 		res = FillRgn(hdc, prRG, hbr3DFace);
 	}
 
-	m_draw_height = m_PanelRect.bottom - m_PanelRect.top - (2*(int)vscroll + (int)hscroll) * scrollHHeight;
-	m_topOffset = vscroll ? m_PanelRect.top + scrollHHeight : m_PanelRect.top;
+	m_draw_height = m_PanelRect.bottom - m_PanelRect.top - (2*(int)vscroll * vscrollArrowHeight) - ((int)hscroll * hscrollHeight);
+	m_topOffset = vscroll ? m_PanelRect.top + vscrollArrowHeight : m_PanelRect.top;
 
 	m_linemodified = true;
 
@@ -525,24 +528,28 @@ bool IndicatorPanel::fileModified(int pos)
 		if (m_totallines > totallines)
 		{
 			int changednum = m_totallines - totallines;
-			std::set<int>::iterator& it_linenum = std::lower_bound(g_map_modified_linenum[m_current_bufferid].begin(), g_map_modified_linenum[m_current_bufferid].end(), linenum+1);
-
-			if(it_linenum != g_map_modified_linenum[m_current_bufferid].end())
+			
+			if(changednum)
 			{
-				//::OutputDebugString(_T("line deleted\n"));
-				size_t currlinenum = *it_linenum;
-				while (currlinenum > linenum)
+				std::set<int>::iterator& it_linenum = std::lower_bound(g_map_modified_linenum[m_current_bufferid].begin(), g_map_modified_linenum[m_current_bufferid].end(), linenum + 1);
+
+				if (it_linenum != g_map_modified_linenum[m_current_bufferid].end())
 				{
-					it_linenum++;
-					g_map_modified_linenum[m_current_bufferid].erase(currlinenum);
-					g_map_modified_linenum[m_current_bufferid].insert(currlinenum - changednum);
-					g_map_modified_indicator[m_current_bufferid].erase((currlinenum) * m_draw_height / totallines);
-					g_map_modified_indicator[m_current_bufferid].insert((currlinenum - changednum) * m_draw_height / totallines);
+					//::OutputDebugString(_T("line deleted\n"));
+					size_t currlinenum = *it_linenum;
+					while (currlinenum > linenum)
+					{
+						it_linenum++;
+						g_map_modified_linenum[m_current_bufferid].erase(currlinenum);
+						g_map_modified_linenum[m_current_bufferid].insert(currlinenum - changednum);
+						g_map_modified_indicator[m_current_bufferid].erase((currlinenum)*m_draw_height / totallines);
+						g_map_modified_indicator[m_current_bufferid].insert((currlinenum - changednum) * m_draw_height / totallines);
 
-					if (it_linenum == g_map_modified_linenum[m_current_bufferid].end())
-						break;
+						if (it_linenum == g_map_modified_linenum[m_current_bufferid].end())
+							break;
 
-					currlinenum = *it_linenum;
+						currlinenum = *it_linenum;
+					}
 				}
 			}
 		}
@@ -551,24 +558,28 @@ bool IndicatorPanel::fileModified(int pos)
 		{
 			//::OutputDebugString(_T("line added\n"));
 			size_t changed = totallines - m_totallines;
-			std::set<int>::iterator& it_linenum = g_map_modified_linenum[m_current_bufferid].end();
-
-			it_linenum--;
-			if (it_linenum != g_map_modified_linenum[m_current_bufferid].begin())
+			
+			if(changed)
 			{
-				size_t currlinenum = *it_linenum;
-				while (currlinenum > linenum)
+				std::set<int>::iterator& it_linenum = g_map_modified_linenum[m_current_bufferid].end();
+
+				it_linenum--;
+				if (it_linenum != g_map_modified_linenum[m_current_bufferid].begin())
 				{
-					it_linenum--;
-					g_map_modified_linenum[m_current_bufferid].erase(currlinenum);
-					g_map_modified_linenum[m_current_bufferid].insert(currlinenum + changed);
-					g_map_modified_indicator[m_current_bufferid].erase(currlinenum * m_draw_height / totallines);
-					g_map_modified_indicator[m_current_bufferid].insert((currlinenum + changed) * m_draw_height / totallines);
+					size_t currlinenum = *it_linenum;
+					while (currlinenum > linenum)
+					{
+						it_linenum--;
+						g_map_modified_linenum[m_current_bufferid].erase(currlinenum);
+						g_map_modified_linenum[m_current_bufferid].insert(currlinenum + changed);
+						g_map_modified_indicator[m_current_bufferid].erase(currlinenum * m_draw_height / totallines);
+						g_map_modified_indicator[m_current_bufferid].insert((currlinenum + changed) * m_draw_height / totallines);
 
-					if (it_linenum == g_map_modified_linenum[m_current_bufferid].begin())
-						break;
+						if (it_linenum == g_map_modified_linenum[m_current_bufferid].begin())
+							break;
 
-					currlinenum = *it_linenum;
+						currlinenum = *it_linenum;
+					}
 				}
 			}
 		}
@@ -630,24 +641,28 @@ bool IndicatorPanel::fileLinesAddedDeleted(int pos, int lines_added)
 					break;
 
 				int changed =  m_totallines - totallines;
-				it_linenum = g_map_modified_linenum[m_current_bufferid].begin();
 
-				//it_linenum++;
-				if (it_linenum != g_map_modified_linenum[m_current_bufferid].end())
+				if(changed)
 				{
-					size_t currlinenum = *it_linenum;
-					while (currlinenum > linenum)
+					it_linenum = g_map_modified_linenum[m_current_bufferid].begin();
+
+					//it_linenum++;
+					if (it_linenum != g_map_modified_linenum[m_current_bufferid].end())
 					{
-						it_linenum++;
-						g_map_modified_linenum[m_current_bufferid].erase(currlinenum);
-						g_map_modified_linenum[m_current_bufferid].insert(currlinenum - changed);
-						g_map_modified_indicator[m_current_bufferid].erase(currlinenum * m_draw_height / totallines);
-						g_map_modified_indicator[m_current_bufferid].insert((currlinenum - changed) * m_draw_height / totallines);
+						size_t currlinenum = *it_linenum;
+						while (currlinenum > linenum)
+						{
+							it_linenum++;
+							g_map_modified_linenum[m_current_bufferid].erase(currlinenum);
+							g_map_modified_linenum[m_current_bufferid].insert(currlinenum - changed);
+							g_map_modified_indicator[m_current_bufferid].erase(currlinenum * m_draw_height / totallines);
+							g_map_modified_indicator[m_current_bufferid].insert((currlinenum - changed) * m_draw_height / totallines);
 
-						if (it_linenum == g_map_modified_linenum[m_current_bufferid].end())
-							break;
+							if (it_linenum == g_map_modified_linenum[m_current_bufferid].end())
+								break;
 
-						currlinenum = *it_linenum;
+							currlinenum = *it_linenum;
+						}
 					}
 				}
 
@@ -665,24 +680,28 @@ bool IndicatorPanel::fileLinesAddedDeleted(int pos, int lines_added)
 				g_map_modified_indicator[m_current_bufferid].insert((linenum)*m_draw_height / totallines);
 
 				int changed = totallines - m_totallines;
-				std::set<int>::iterator& it_linenum = g_map_modified_linenum[m_current_bufferid].end();
 
-				it_linenum--;
-				if (it_linenum != g_map_modified_linenum[m_current_bufferid].begin())
+				if(changed)
 				{
-					size_t currlinenum = *it_linenum;
-					while (currlinenum > linenum)
+					std::set<int>::iterator& it_linenum = g_map_modified_linenum[m_current_bufferid].end();
+
+					it_linenum--;
+					if (it_linenum != g_map_modified_linenum[m_current_bufferid].begin())
 					{
-						it_linenum--;
-						g_map_modified_linenum[m_current_bufferid].erase(currlinenum);
-						g_map_modified_linenum[m_current_bufferid].insert(currlinenum + changed);
-						g_map_modified_indicator[m_current_bufferid].erase(currlinenum * m_draw_height / totallines);
-						g_map_modified_indicator[m_current_bufferid].insert((currlinenum + changed) * m_draw_height / totallines);
+						size_t currlinenum = *it_linenum;
+						while (currlinenum > linenum)
+						{
+							it_linenum--;
+							g_map_modified_linenum[m_current_bufferid].erase(currlinenum);
+							g_map_modified_linenum[m_current_bufferid].insert(currlinenum + changed);
+							g_map_modified_indicator[m_current_bufferid].erase(currlinenum * m_draw_height / totallines);
+							g_map_modified_indicator[m_current_bufferid].insert((currlinenum + changed) * m_draw_height / totallines);
 
-						if (it_linenum == g_map_modified_linenum[m_current_bufferid].begin())
-							break;
+							if (it_linenum == g_map_modified_linenum[m_current_bufferid].begin())
+								break;
 
-						currlinenum = *it_linenum;
+							currlinenum = *it_linenum;
+						}
 					}
 				}
 
@@ -730,5 +749,11 @@ bool IndicatorPanel::fileSingleClicked()
 
 	RedrawIndicatorPanel();
 
+	return true;
+}
+
+bool IndicatorPanel::fileclose()
+{
+	g_map_modified_linenum.erase(m_current_bufferid);
 	return true;
 }
