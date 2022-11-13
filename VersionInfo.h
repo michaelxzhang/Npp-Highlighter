@@ -16,11 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define VERSION_MA 2
-#define VERSION_MI 2 
+#define VERSION_MA 1
+#define VERSION_MI 0
 
 // increment revision in case of modification
-#define REVISION 185 
+#define REVISION 0
  #define xstr(s) str(s)
  #define str(s) #s
 #define _VERSION_STR VERSION_MA ## . ## REVISION
