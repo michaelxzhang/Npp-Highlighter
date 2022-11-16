@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma warning (disable : 4355)
 
-COLORREF g_color_change = RGB(17, 240, 84);
+COLORREF g_color_change = RGB(255, 128, 0);
 COLORREF g_color_current_line = RGB(0, 0, 255);
 COLORREF g_color_search = RGB(212, 157, 6);
 long g_indicator_width  = 5;
