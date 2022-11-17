@@ -83,9 +83,11 @@ LRESULT IndicatorPanel::OnNCCalcSize(HWND hwnd, UINT message, WPARAM wParam, LPA
 		int vScrollWidth = GetSystemMetrics(SM_CXHTHUMB);
 
 		m_PanelRect = ncp->rgrc[0];
+		
+		GetWindowRect(m_View->m_Handle, &m_PanelRect_absolute);
 
 		m_PanelRect.bottom -= (m_PanelRect.top + borderWidth); 
-		m_PanelRect.top = borderWidth;
+		m_PanelRect.top = borderWidth - 2;
 
 		m_PanelRect.right -= (m_PanelRect.left + borderWidth); 
 		m_PanelRect.left = m_PanelRect.right - m_PanelWidth - borderWidth;
@@ -755,5 +757,55 @@ bool IndicatorPanel::fileSingleClicked()
 bool IndicatorPanel::fileclose()
 {
 	g_map_modified_linenum.erase(m_current_bufferid);
+	return true;
+}
+
+//Move scrollbar to double-clicked position
+bool IndicatorPanel::movescrollbarto(int x, int y)
+{
+	CString s;
+	s.Format(_T("moveto x=%d, y=%d\n"), x, y);
+	::OutputDebugString(s);
+
+	int ypos = 0;
+
+	y = y - m_PanelRect_absolute.top;
+
+	if (y < m_topOffset)
+		ypos = 0;
+	else if (y > m_draw_height)
+		ypos = m_draw_height;
+	else
+	{
+		ypos = y - m_topOffset;
+	}
+
+	ypos = (m_totallines * ypos) / m_draw_height;
+
+	s.Format(_T("moveto ypos=%d\n"), ypos);
+	::OutputDebugString(s);
+
+	int linesonscreen = m_View->sci(SCI_LINESONSCREEN, 0, 0);
+
+	int scrollpos = 0;
+
+	if ((ypos - linesonscreen / 2) <= 0)
+	{
+		scrollpos = 0;
+	}
+	else if ((ypos - linesonscreen / 2) >= m_totallines)
+	{
+		scrollpos = m_totallines - linesonscreen;
+	}
+	else
+	{
+		scrollpos = ypos - linesonscreen / 2;
+	}
+
+	s.Format(_T("moveto linesonscreen=%d, scrollpos=%d\n"), linesonscreen, scrollpos);
+	::OutputDebugString(s);
+
+	m_View->sci(SCI_SETFIRSTVISIBLELINE, scrollpos, 0);
+
 	return true;
 }

@@ -364,11 +364,17 @@ HRESULT STDMETHODCALLTYPE CEditorView::get_handle(int *result){
 
 LRESULT CEditorView::OnMessage(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam){
 	switch(message){
+	    case WM_MOVE:
 		case WM_NCCALCSIZE:{
 			return m_IndPanel.OnNCCalcSize(hwnd, message, wParam, lParam);
 		}
 		case WM_NCPAINT:{
 			return m_IndPanel.OnNCPaint(hwnd, message, wParam, lParam);
+		}
+		case WM_NCLBUTTONDBLCLK:
+		{
+			m_IndPanel.movescrollbarto(LOWORD(lParam), HIWORD(lParam));
+			break;
 		}
 		case WM_LBUTTONUP:
 			if (m_Listener){
