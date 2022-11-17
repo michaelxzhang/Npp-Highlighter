@@ -37,6 +37,7 @@ class IndicatorPanel
 	LineMasks m_Indicators;
 	LineMasks m_PixelIndicators;
 
+	RECT	m_PanelRect_absolute;
 	RECT	m_PanelRect;
 	RECT	m_UnderScroll;
 
@@ -77,7 +78,7 @@ public:
 	bool fileclose();
 	void updateSelectedIndicator(HDC hdc);
 	void updateChangedIndicator(HDC hdc);
-
+	bool movescrollbarto(int x, int y);
 	static bool hasStyle(HWND hwnd, int style);
 
 	LRESULT OnNCCalcSize(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
