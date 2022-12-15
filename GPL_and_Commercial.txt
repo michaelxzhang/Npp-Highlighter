@@ -16,10 +16,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 
-Using of Common part of jN in non-GPL applications
+Using of Common part of Npp-Highlighter in non-GPL applications
 _______________________________________________________________________________
 
-A commercial license to Common part of jN provides you the legal means 
+A commercial license to Common part of Npp-Highlighter provides you the legal means 
 both to modify it and to incorporate it into a product, without the obligation 
 of providing the resulting code under the GPL license. Fees vary depending on 
 the application and the scale of its use. For more information about licensing, 
