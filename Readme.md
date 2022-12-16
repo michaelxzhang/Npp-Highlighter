@@ -22,5 +22,5 @@ Highlighter disabled the javascript functions from jN, only use the bar to displ
 - Allow user change the color?
 
 ## Manual Install
-- For 32-bit, download the **Npp-Highlighter.dll** under **Release\Win32** folder, navigage to your Notepad++ plugin folder(C:\Program Files (x86)\Notepad++\plugins\), create folder Npp-Highlighter, put the Npp-Highlighter.dll under it. Restart Notepad++
-- For 64-bit, download the **Npp-Highlighter.dll** under **Release\x64** folder, navigage to your Notepad++ plugin folder(C:\Program Files\Notepad++\plugins\), create folder Npp-Highlighter, put the Npp-Highlighter.dll under it. Restart Notepad++
+- For 32-bit, download the **Npp-Highlighter.dll** under **Release\Win32** folder, launch Notepad++, click menu 'Settings/Import/Import plugin(s), select the dll file, follow the instructions.
+- For 64-bit, download the **Npp-Highlighter.dll** under **Release\x64** folder, launch Notepad++, click menu 'Settings/Import/Import plugin(s), select the dll file, follow the instructions.
