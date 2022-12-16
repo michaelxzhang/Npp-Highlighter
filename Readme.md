@@ -4,7 +4,7 @@ Npp-Highlighter draw indicator on scroll bar when:
 - line contents changed
 - double clicked and smart highlighted words
 - text highlighted by Style token
-- double click the indicator(scrollbar) area will bring the scrollbar jump to the location
+- double click the indicator(scrollbar) area to bring the scrollbar jump to the location
 
 Many thanks to Sieukrem, this plugin is based on his plugin - jN, from here
 [https://github.com/sieukrem/jn-npp-plugin](https://github.com/sieukrem/jn-npp-plugin)
