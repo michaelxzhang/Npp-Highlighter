@@ -4,7 +4,6 @@ Npp-Highlighter draw indicator on scroll bar when:
 - line contents changed
 - double clicked and smart highlighted words
 - text highlighted by Style token
-- double click the indicator(scrollbar) area to bring the scrollbar jump to the location
 
 Many thanks to Sieukrem, this plugin is based on his plugin - jN, from here
 [https://github.com/sieukrem/jn-npp-plugin](https://github.com/sieukrem/jn-npp-plugin)
@@ -16,7 +15,8 @@ Highlighter disabled the javascript functions from jN, only use the bar to displ
 - Highlight the changed lines on the right side bar
 - Highlight the word selected by double click on the right side bar
 - Indicate the current line position on the right side bar
-
+- double click the indicator(scrollbar) area to bring the scrollbar jump to the location
+- 
 ## To-dos
 - Improve the performance when dealing with huge files
 - Allow user change the color?
